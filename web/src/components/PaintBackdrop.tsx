@@ -2,16 +2,10 @@ import { useEffect, useRef } from 'react'
 import type { Player } from '../audio/usePlayer'
 import type { Chog } from '../data/chogs'
 
-// The page paints while it plays: every note that sounds blooms in its vowel's colour, like stage light on ultramarine.
-// Underneath, a few slow orbs drift so the backdrop is never flat. All on one canvas, behind everything.
+// The page paints while it plays: every note that sounds blooms in its vowel's colour, like wet ink soaking into paper.
+// The desk itself stays clean paper. All on one canvas, multiplied over it (see .backdrop).
 
 const PAINT = ['255,90,71', '255,176,32', '37,207,148', '45,180,242', '155,107,255'] // ahh ehh eee ohh ooo
-const ORBS = [
-  { c: '155,107,255', x: 0.15, y: 0.2, r: 0.42, sx: 0.00007, sy: 0.00005, a: 0.2 },
-  { c: '45,180,242', x: 0.85, y: 0.3, r: 0.38, sx: 0.00005, sy: 0.00008, a: 0.16 },
-  { c: '255,79,163', x: 0.55, y: 0.95, r: 0.46, sx: 0.00006, sy: 0.00004, a: 0.13 },
-  { c: '37,207,148', x: 0.05, y: 0.85, r: 0.3, sx: 0.00009, sy: 0.00006, a: 0.1 },
-]
 
 type Bloom = { x: number; y: number; r: number; c: string; born: number; life: number; ring: boolean }
 
@@ -50,19 +44,7 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
       g.setTransform(dpr, 0, 0, dpr, 0, 0)
       g.globalCompositeOperation = 'source-over'
       g.clearRect(0, 0, w, h)
-      g.globalCompositeOperation = 'lighter'
-
-      const m = Math.max(w, h)
-      for (const o of ORBS) {
-        const x = (o.x + Math.sin(t * o.sx * 6.28) * 0.08) * w
-        const y = (o.y + Math.cos(t * o.sy * 6.28) * 0.08) * h
-        const r = o.r * m
-        const grad = g.createRadialGradient(x, y, 0, x, y, r)
-        grad.addColorStop(0, `rgba(${o.c},${o.a})`)
-        grad.addColorStop(1, `rgba(${o.c},0)`)
-        g.fillStyle = grad
-        g.fillRect(x - r, y - r, r * 2, r * 2)
-      }
+      g.globalCompositeOperation = 'multiply'
 
       const now = performance.now()
       blooms.current = blooms.current.filter(b => now - b.born < b.life)
@@ -70,7 +52,7 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
         const k = (now - b.born) / b.life // 0..1
         const ease = 1 - (1 - k) * (1 - k)
         const r = b.r * (0.55 + ease * 0.9)
-        const a = (1 - k) * (b.ring ? 0.5 : 0.42)
+        const a = (1 - k) * (b.ring ? 0.55 : 0.5)
         if (b.ring) {
           g.strokeStyle = `rgba(${b.c},${a})`
           g.lineWidth = 3 + (1 - k) * 5

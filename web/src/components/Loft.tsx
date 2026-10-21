@@ -136,12 +136,12 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
       g.arc(x, y, ever ? r : r * 0.78, 0, Math.PI * 2)
       if (sungNow) { g.fillStyle = RING[c.spec.vowel]; g.fill() }
       else if (ever) { g.fillStyle = RING[c.spec.vowel] + '99'; g.fill() }
-      else { g.fillStyle = 'rgba(20,20,58,0.12)'; g.fill() }
-      if (mine.has(c.id)) { g.lineWidth = 2; g.strokeStyle = '#14143a'; g.beginPath(); g.arc(x, y, r + 2, 0, Math.PI * 2); g.stroke() }
+      else { g.fillStyle = 'rgba(28,30,43,0.13)'; g.fill() }
+      if (mine.has(c.id)) { g.lineWidth = 2; g.strokeStyle = '#1c1e2b'; g.beginPath(); g.arc(x, y, r + 2, 0, Math.PI * 2); g.stroke() }
       if (selectedId === c.id) { g.lineWidth = 3; g.strokeStyle = '#ffb800'; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke() }
     })
     g.font = '700 12px "Hanken Grotesk", system-ui, sans-serif'
-    g.fillStyle = '#55577f'
+    g.fillStyle = '#64635a'
     g.textAlign = 'center'
     g.fillText('seated by voice, left to right: soprano, alto, tenor, bass', size.w / 2, size.h - 4)
   }, [lay, stats, epoch, mine, selectedId, size])

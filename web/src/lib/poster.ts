@@ -6,7 +6,7 @@ import { keyName, PITCHES, STEPS } from './music'
 import type { Song } from './share'
 
 // A poster for a song: its notes become paint. Every vowel has a colour, every note a bloom,
-// and a thin white line runs through them in the order they are sung. Same song, same poster, always.
+// and a thin ink line runs through them in the order they are sung. Same song, same poster, always.
 
 const W = 1080, H = 1350
 const PAINT = ['255,90,71', '255,176,32', '37,207,148', '45,180,242', '155,107,255']
@@ -82,22 +82,22 @@ function sticker(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, 
   g.save()
   g.translate(x, y)
   g.rotate(tilt)
-  g.shadowColor = 'rgba(8,10,84,.45)'; g.shadowOffsetX = 5; g.shadowOffsetY = 8; g.shadowBlur = 0
+  g.shadowColor = 'rgba(28,30,43,.4)'; g.shadowOffsetX = 5; g.shadowOffsetY = 8; g.shadowBlur = 0
   g.fillStyle = `rgb(${ring})`
   g.beginPath(); g.arc(0, 0, r + 9, 0, Math.PI * 2); g.fill()
   g.shadowColor = 'transparent'
-  g.fillStyle = '#fff'
+  g.fillStyle = '#faf8f1'
   g.beginPath(); g.arc(0, 0, r + 4, 0, Math.PI * 2); g.fill()
   g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.clip()
   g.drawImage(img, -r, -r, r * 2, r * 2)
   g.restore()
 }
 
-export function inked(g: CanvasRenderingContext2D, text: string, x: number, y: number, font: string, color = '#fff') {
+export function inked(g: CanvasRenderingContext2D, text: string, x: number, y: number, font: string, color = '#1c1e2b') {
   g.font = font
   g.textAlign = 'center'
-  g.fillStyle = 'rgba(8,10,84,.35)'; g.fillText(text, x + 9, y + 9)
-  g.fillStyle = '#ff4fa3'; g.fillText(text, x + 5, y + 5)
+  g.fillStyle = 'rgba(28,30,43,.16)'; g.fillText(text, x + 9, y + 9)
+  g.fillStyle = '#d3427f'; g.fillText(text, x + 5, y + 5)
   g.fillStyle = color; g.fillText(text, x, y)
 }
 
@@ -118,9 +118,9 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   const seed = hash(`poster:${title}:${song.notes.map(n => `${n.id}.${n.step}.${n.pitch}`).join(',')}`)
   const r = rng(seed)
 
-  // ultramarine night with a spotlight from above
+  // warm paper stock, a touch lighter at the top
   const bg = g.createRadialGradient(W / 2, -80, 40, W / 2, 300, 1300)
-  bg.addColorStop(0, '#3a47e6'); bg.addColorStop(0.55, '#232fc4'); bg.addColorStop(1, '#141a86')
+  bg.addColorStop(0, '#e7e4d7'); bg.addColorStop(0.55, '#d9d6c8'); bg.addColorStop(1, '#cbc7b5')
   g.fillStyle = bg
   g.fillRect(0, 0, W, H)
 
@@ -133,33 +133,35 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   }))
 
   // print character: halftone corners in the second ink
-  halftone(g, 40, 40, 360, 'rgba(255,79,163,.55)')
-  halftone(g, W - 30, H - 30, 380, 'rgba(45,180,242,.5)')
+  halftone(g, 40, 40, 360, 'rgba(211,66,127,.6)')
+  halftone(g, W - 30, H - 30, 380, 'rgba(246,197,51,.65)')
 
   // the field: clip everything painted to it
   g.save()
   g.beginPath(); g.rect(fx - 10, fy - 10, fw + 20, fh + 20); g.clip()
+  g.fillStyle = '#f4f1e6' // the print area: lighter stock, so the paint reads as ink
+  g.fillRect(fx - 10, fy - 10, fw + 20, fh + 20)
 
   // a giant ghosted vowel behind the painting: the poster says what the voice sings
   const lead = hero ?? byId.get(song.notes[0]?.id ?? -1)
   if (lead) {
     g.save()
-    g.globalCompositeOperation = 'lighter'
+    g.globalCompositeOperation = 'multiply'
     g.font = '430px "Bagel Fat One", system-ui, sans-serif'
     g.textAlign = 'center'
-    g.fillStyle = `rgba(${PAINT[lead.spec.vowel]},.17)`
+    g.fillStyle = `rgba(${PAINT[lead.spec.vowel]},.3)`
     g.fillText(['ahh', 'ehh', 'eee', 'ohh', 'ooo'][lead.spec.vowel], fx + fw / 2, fy + fh / 2 + 150)
     g.restore()
   }
 
   // record grooves around the heart of the poster
   g.save()
-  g.strokeStyle = 'rgba(255,255,255,.11)'; g.lineWidth = 2
+  g.strokeStyle = 'rgba(28,30,43,.08)'; g.lineWidth = 2
   for (let rr = 190; rr < 640; rr += 15) { g.beginPath(); g.arc(fx + fw / 2, fy + fh / 2 - 10, rr, 0, Math.PI * 2); g.stroke() }
   g.restore()
 
   g.save()
-  g.globalCompositeOperation = 'screen'
+  g.globalCompositeOperation = 'multiply'
   const pal = new Map<number, string[]>()
   for (const p of pos) {
     const chog = byId.get(p.n.id)
@@ -170,7 +172,7 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
     const col = own[Math.floor(r() * own.length)]
     const rad = 130 + chog.spec.unison * 36 + r() * 80
     const grad = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad)
-    grad.addColorStop(0, `rgba(${col},.85)`); grad.addColorStop(0.5, `rgba(${col},.4)`); grad.addColorStop(1, `rgba(${col},0)`)
+    grad.addColorStop(0, `rgba(${col},.8)`); grad.addColorStop(0.5, `rgba(${col},.34)`); grad.addColorStop(1, `rgba(${col},0)`)
     g.fillStyle = grad
     g.fillRect(p.x - rad, p.y - rad, rad * 2, rad * 2)
     // three rings out from every note, in the colour of its vowel: the voice leaving the mouth
@@ -183,7 +185,7 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   const line = [...pos].sort((a, b) => a.n.step - b.n.step || a.n.pitch - b.n.pitch)
   if (line.length > 1) {
     g.save()
-    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round'
+    g.strokeStyle = 'rgba(28,30,43,.78)'; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round'
     g.beginPath(); g.moveTo(line[0].x, line[0].y)
     for (let i = 1; i < line.length; i++) {
       const a = line[i - 1], b = line[i]
@@ -211,11 +213,11 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
     g.save()
     g.translate(W / 2, fy + fh / 2 - 10)
     g.rotate(-0.045)
-    g.shadowColor = 'rgba(8,10,84,.5)'; g.shadowOffsetX = 10; g.shadowOffsetY = 14
+    g.shadowColor = 'rgba(28,30,43,.42)'; g.shadowOffsetX = 10; g.shadowOffsetY = 14
     g.fillStyle = `rgb(${PAINT[hero.spec.vowel]})`
     g.beginPath(); g.roundRect(-hs / 2 - 14, -hs / 2 - 14, hs + 28, hs + 28, 46); g.fill()
     g.shadowColor = 'transparent'
-    g.fillStyle = '#fff'
+    g.fillStyle = '#faf8f1'
     g.beginPath(); g.roundRect(-hs / 2 - 6, -hs / 2 - 6, hs + 12, hs + 12, 40); g.fill()
     g.beginPath(); g.roundRect(-hs / 2, -hs / 2, hs, hs, 34); g.clip()
     g.drawImage(big, -hs / 2, -hs / 2, hs, hs)
@@ -223,17 +225,17 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   }
 
   // frame, like a printed edge
-  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 5
+  g.strokeStyle = '#1c1e2b'; g.lineWidth = 5
   g.strokeRect(fx - 10, fy - 10, fw + 20, fh + 20)
 
   // type
   g.textBaseline = 'alphabetic'
-  g.fillStyle = 'rgba(255,255,255,.85)'
+  g.fillStyle = '#64635a'
   g.font = '600 30px "Hanken Grotesk", system-ui, sans-serif'
   g.textAlign = 'center'
   g.fillText('CHOG CHOIR PRESENTS', W / 2, 108)
   inked(g, title, W / 2, 270, '150px "Bagel Fat One", system-ui, sans-serif')
-  g.fillStyle = '#fff'
+  g.fillStyle = '#1c1e2b'
   g.font = '700 38px "Hanken Grotesk", system-ui, sans-serif'
   g.textAlign = 'center'
   g.fillText(subtitle ?? `${keyName(song.root, song.mode)}, ${song.tempo} bpm, ${BEATS[song.beat].toLowerCase()} beat`, W / 2, 352)
@@ -241,7 +243,7 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   // the five vowel colours, as a colour bar and the credits line
   const bw = (W - 140) / 5
   PAINT.forEach((c, i) => { g.fillStyle = `rgb(${c})`; g.fillRect(70 + i * bw, 1166, bw, 18) })
-  g.fillStyle = '#fff'
+  g.fillStyle = '#1c1e2b'
   g.font = '40px "Bagel Fat One", system-ui, sans-serif'
   g.textAlign = 'left'
   g.fillText('Chog Choir', 70, 1262)
@@ -249,6 +251,6 @@ export async function makePoster({ song, byId, title, subtitle, hero }: PosterOp
   g.textAlign = 'right'
   g.fillText(`${ids.length} ${ids.length === 1 ? 'voice' : 'voices'}. Every Chog has a voice.`, W - 70, 1262)
 
-  grain(g, 0.5)
+  grain(g, 0.4)
   return new Promise<Blob>((res, rej) => cv.toBlob(b => (b ? res(b) : rej(new Error('Could not make the poster.'))), 'image/png'))
 }

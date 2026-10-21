@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" fill="none" stroke="#c8c4b0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- vinyl -->
+  <g transform="translate(112 112) rotate(-12)"><circle r="62"/><circle r="42" stroke-width="3"/><circle r="22"/><circle r="4" fill="#c8c4b0"/></g>
+  <!-- two beamed notes -->
+  <g transform="translate(300 74) rotate(9)"><ellipse cx="0" cy="62" rx="17" ry="13" transform="rotate(-20 0 62)"/><ellipse cx="52" cy="50" rx="17" ry="13" transform="rotate(-20 52 50)"/><path d="M16 58V-8M68 46V-20"/><path d="M16 -8L68 -20" stroke-width="10"/></g>
+  <!-- microphone -->
+  <g transform="translate(528 112) rotate(14)"><rect x="-19" y="-52" width="38" height="66" rx="19"/><path d="M-32 -6a32 32 0 0 0 64 0M0 26V52M-20 54H20"/><path d="M-19 -28H19M-19 -12H19" stroke-width="3"/></g>
+  <!-- headphones -->
+  <g transform="translate(96 340) rotate(-8)"><path d="M-50 14a50 50 0 0 1 100 0"/><rect x="-64" y="8" width="26" height="46" rx="11"/><rect x="38" y="8" width="26" height="46" rx="11"/></g>
+  <!-- star -->
+  <g transform="translate(318 330) rotate(12)"><path d="M0 -46L11.2 -15.4L43.7 -14.2L18.1 5.9L27 37.2L0 19L-27 37.2L-18.1 5.9L-43.7 -14.2L-11.2 -15.4Z"/></g>
+  <!-- ticket stub -->
+  <g transform="translate(528 346) rotate(14)"><path d="M-58 -34H58V-9a9 9 0 0 0 0 18V34H-58V9a9 9 0 0 0 0-18Z"/><path d="M24 -24V24" stroke-dasharray="4 9" stroke-width="3"/><path d="M-40 -8H-2M-40 10H-14" stroke-width="3"/></g>
+  <!-- play button -->
+  <g transform="translate(118 548)"><circle r="46"/><path d="M-13 -22L25 0L-13 22Z"/></g>
+  <!-- sound bars -->
+  <g transform="translate(322 548)" stroke-width="9"><path d="M-48 -12V12M-24 -30V30M0 -46V46M24 -22V22M48 -34V34"/></g>
+  <!-- singing face -->
+  <g transform="translate(528 556) rotate(-8)"><circle r="46"/><circle cx="-15" cy="-10" r="3.5" fill="#c8c4b0"/><circle cx="15" cy="-10" r="3.5" fill="#c8c4b0"/><ellipse cx="0" cy="16" rx="11" ry="14"/><circle cx="-29" cy="8" r="6" stroke-width="3"/><circle cx="29" cy="8" r="6" stroke-width="3"/></g>
+  <!-- sparkles -->
+  <g stroke-width="4"><path transform="translate(212 224)" d="M0 -15L4 -4L15 0L4 4L0 15L-4 4L-15 0L-4 -4Z"/><path transform="translate(430 222) scale(.8)" d="M0 -15L4 -4L15 0L4 4L0 15L-4 4L-15 0L-4 -4Z"/><path transform="translate(214 452) scale(.8)" d="M0 -15L4 -4L15 0L4 4L0 15L-4 4L-15 0L-4 -4Z"/><path transform="translate(428 448)" d="M0 -15L4 -4L15 0L4 4L0 15L-4 4L-15 0L-4 -4Z"/><circle cx="36" cy="236" r="6"/><circle cx="600" cy="236" r="6"/><circle cx="330" cy="206" r="5"/><circle cx="330" cy="448" r="5"/></g>
+</svg>

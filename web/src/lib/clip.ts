@@ -11,7 +11,7 @@ import { thumbLg } from '../data/chogs'
 const SIZE = 1080
 const RING = ['#ff6b57', '#ffb02e', '#2fcf95', '#35b6f0', '#a47bff']
 const SOUND = ['ahh', 'ehh', 'eee', 'ohh', 'ooo']
-const INK = '#14143a'
+const INK = '#1c1e2b'
 
 const loadImg = (src: string) =>
   new Promise<HTMLImageElement>(resolve => {
@@ -35,30 +35,31 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
   const cw = gridW / STEPS, ch = gridH / PITCHES
 
   return (g: CanvasRenderingContext2D, { t }: Frame) => {
-    g.fillStyle = '#2a36d4'
+    g.fillStyle = '#d9d6c8'
     g.fillRect(0, 0, SIZE, SIZE)
-    g.fillStyle = '#f5f6fd'
+    g.fillStyle = '#f1eee3'
     round(g, pad - 20, pad - 20, SIZE - (pad - 20) * 2, SIZE - (pad - 20) * 2, 52); g.fill()
+    g.strokeStyle = INK; g.lineWidth = 4; g.stroke()
 
     g.fillStyle = INK
     g.textBaseline = 'alphabetic'
     g.font = '64px "Bagel Fat One", system-ui, sans-serif'
     g.fillText(title, pad + 18, pad + 66)
-    g.fillStyle = '#55577f'
+    g.fillStyle = '#64635a'
     g.font = '600 28px "Hanken Grotesk", system-ui, sans-serif'
     g.fillText(subtitle, pad + 18, pad + 112)
 
     // staff paper
-    g.fillStyle = '#fff'
+    g.fillStyle = '#faf8f1'
     round(g, gridX - 62, gridY - 18, gridW + 62 + 26, gridH + 36, 30); g.fill()
     for (let p = 0; p < PITCHES; p++) {
       const y = gridY + (PITCHES - 1 - p) * ch + ch / 2
-      g.strokeStyle = 'rgba(20,20,58,.2)'
+      g.strokeStyle = 'rgba(28,30,43,.2)'
       g.lineWidth = 2
       g.beginPath(); g.moveTo(gridX, y); g.lineTo(gridX + gridW, y); g.stroke()
     }
     for (let s = 0; s < STEPS; s += 4) {
-      g.strokeStyle = 'rgba(20,20,58,.16)'
+      g.strokeStyle = 'rgba(28,30,43,.16)'
       g.beginPath(); g.moveTo(gridX + s * cw, gridY); g.lineTo(gridX + s * cw, gridY + gridH); g.stroke()
     }
 
@@ -67,7 +68,7 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
     const step = stepIdx % STEPS
     const since = elapsed - stepIdx * stepDur
     if (t >= 0) {
-      g.fillStyle = 'rgba(255,210,63,.55)'
+      g.fillStyle = 'rgba(246,197,51,.55)'
       round(g, gridX + step * cw, gridY - 8, cw, gridH + 16, 16); g.fill()
     }
 
@@ -81,7 +82,7 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
       const k = hit ? 1 + 0.3 * Math.max(0, 1 - since / 0.26) : 1
       const r = Math.min(cw, ch) * 0.47 * k
       g.save()
-      g.shadowColor = 'rgba(20,20,58,.2)'; g.shadowOffsetY = 4; g.shadowBlur = 0
+      g.shadowColor = 'rgba(28,30,43,.22)'; g.shadowOffsetY = 4; g.shadowBlur = 0
       g.fillStyle = RING[chog.spec.vowel]
       g.beginPath(); g.arc(cx, cy, r + 3.5, 0, Math.PI * 2); g.fill()
       g.restore()
@@ -95,7 +96,7 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
         g.globalAlpha = a
         g.font = '30px "Bagel Fat One", system-ui, sans-serif'
         g.textAlign = 'center'
-        g.lineWidth = 8; g.strokeStyle = '#fff'; g.lineJoin = 'round'
+        g.lineWidth = 8; g.strokeStyle = '#faf8f1'; g.lineJoin = 'round'
         g.strokeText(SOUND[chog.spec.vowel], cx, cy - r - 8 - since * 40)
         g.fillStyle = RING[chog.spec.vowel]
         g.fillText(SOUND[chog.spec.vowel], cx, cy - r - 8 - since * 40)
@@ -108,7 +109,7 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
     g.font = '40px "Bagel Fat One", system-ui, sans-serif'
     g.fillText('Chog Choir', pad + 18, SIZE - pad - 6)
     g.textAlign = 'right'
-    g.fillStyle = '#55577f'
+    g.fillStyle = '#64635a'
     g.font = '600 26px "Hanken Grotesk", system-ui, sans-serif'
     g.fillText('Every Chog has a voice', SIZE - pad - 18, SIZE - pad - 8)
     g.textAlign = 'left'
@@ -122,14 +123,14 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
   const vc = RING[chog.spec.vowel]
   return (g: CanvasRenderingContext2D, { t }: Frame) => {
     const bg = g.createRadialGradient(SIZE / 2, -60, 40, SIZE / 2, 300, 1250)
-    bg.addColorStop(0, '#3a47e6'); bg.addColorStop(0.55, '#232fc4'); bg.addColorStop(1, '#141a86')
+    bg.addColorStop(0, '#e7e4d7'); bg.addColorStop(0.55, '#d9d6c8'); bg.addColorStop(1, '#cbc7b5')
     g.fillStyle = bg
     g.fillRect(0, 0, SIZE, SIZE)
-    halftone(g, 30, 30, 330, 'rgba(255,79,163,.5)')
-    halftone(g, SIZE - 20, SIZE - 20, 330, 'rgba(45,180,242,.45)')
+    halftone(g, 30, 30, 330, 'rgba(211,66,127,.55)')
+    halftone(g, SIZE - 20, SIZE - 20, 330, 'rgba(246,197,51,.8)')
 
     g.textAlign = 'center'
-    g.fillStyle = 'rgba(255,255,255,.85)'
+    g.fillStyle = '#64635a'
     g.font = '600 28px "Hanken Grotesk", system-ui, sans-serif'
     g.fillText('CHOG CHOIR PRESENTS', SIZE / 2, 86)
 
@@ -144,7 +145,7 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
       const a = Math.max(0, 1 - since / 0.9)
       const rad = 420 + (1 - a) * 160
       g.save()
-      g.globalCompositeOperation = 'screen'
+      g.globalCompositeOperation = 'multiply'
       const gr = g.createRadialGradient(SIZE / 2, 440, 0, SIZE / 2, 440, rad)
       gr.addColorStop(0, `${vc}${Math.round(a * 150).toString(16).padStart(2, '0')}`)
       gr.addColorStop(1, `${vc}00`)
@@ -157,13 +158,13 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
     const cx = SIZE / 2 + 150, cy = 440, R = 250
     const spin = elapsed * 1.6
     g.save()
-    g.shadowColor = 'rgba(8,10,84,.5)'; g.shadowOffsetX = 10; g.shadowOffsetY = 12
-    g.fillStyle = '#12122b'
+    g.shadowColor = 'rgba(28,30,43,.4)'; g.shadowOffsetX = 10; g.shadowOffsetY = 12
+    g.fillStyle = '#1b1b24'
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill()
     g.restore()
     g.save()
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip()
-    g.strokeStyle = 'rgba(120,120,200,.16)'; g.lineWidth = 2
+    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 2
     for (let rr = R * 0.4; rr < R * 0.93; rr += 7) { g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.stroke() }
     g.strokeStyle = vc; g.lineWidth = 9
     g.beginPath(); g.arc(cx, cy, R * 0.88, 0, Math.PI * 2); g.stroke()
@@ -180,7 +181,7 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
     g.restore()
     g.strokeStyle = vc; g.lineWidth = 6
     g.beginPath(); g.arc(0, 0, R * 0.38, 0, Math.PI * 2); g.stroke()
-    g.fillStyle = '#f5f6fd'; g.beginPath(); g.arc(0, 0, 9, 0, Math.PI * 2); g.fill()
+    g.fillStyle = '#f1eee3'; g.beginPath(); g.arc(0, 0, 9, 0, Math.PI * 2); g.fill()
     g.restore()
     g.strokeStyle = INK; g.lineWidth = 5
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke()
@@ -191,7 +192,7 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
     const sx = SIZE / 2 - 190, sy = 440
     g.save()
     g.translate(sx, sy); g.rotate(-0.04)
-    g.shadowColor = 'rgba(8,10,84,.55)'; g.shadowOffsetX = 12; g.shadowOffsetY = 14
+    g.shadowColor = 'rgba(28,30,43,.42)'; g.shadowOffsetX = 12; g.shadowOffsetY = 14
     g.fillStyle = INK
     g.beginPath(); g.roundRect(-sz / 2 - 6, -sz / 2 - 6, sz + 12, sz + 12, 20); g.fill()
     g.shadowColor = 'transparent'
@@ -203,7 +204,7 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
       g.save()
       g.globalAlpha = Math.max(0, 1 - since / 0.8)
       g.font = '70px "Bagel Fat One", system-ui, sans-serif'
-      g.lineWidth = 14; g.strokeStyle = '#fff'; g.lineJoin = 'round'
+      g.lineWidth = 14; g.strokeStyle = '#faf8f1'; g.lineJoin = 'round'
       const y = sy - 220 - since * 70
       g.strokeText(SOUND[chog.spec.vowel], sx + 40, y)
       g.fillStyle = vc
@@ -212,7 +213,7 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
     }
 
     inked(g, title, SIZE / 2, 850, '120px "Bagel Fat One", system-ui, sans-serif')
-    g.fillStyle = '#fff'
+    g.fillStyle = INK
     g.font = '700 32px "Hanken Grotesk", system-ui, sans-serif'
     g.textAlign = 'center'
     g.fillText(meta, SIZE / 2, 906)
@@ -223,10 +224,11 @@ function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: s
       const sing = song.notes.some(n => n.step === s)
       g.beginPath()
       g.arc(x0 + s * 52, 990, s === step && t >= 0 ? 15 : 10, 0, Math.PI * 2)
-      g.fillStyle = s === step && t >= 0 ? '#ffd23f' : sing ? vc : 'rgba(255,255,255,.28)'
+      g.fillStyle = s === step && t >= 0 ? '#f6c533' : sing ? vc : 'rgba(28,30,43,.18)'
       g.fill()
+      if (s === step && t >= 0) { g.strokeStyle = INK; g.lineWidth = 3; g.stroke() }
     }
-    g.fillStyle = '#fff'
+    g.fillStyle = INK
     g.font = '36px "Bagel Fat One", system-ui, sans-serif'
     g.fillText('Chog Choir', SIZE / 2, 1052)
     g.textAlign = 'left'
