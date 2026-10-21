@@ -11,6 +11,7 @@ import type { Chog } from '../data/chogs'
 import { bandSong, cellKey, withPhrase } from '../lib/compose'
 import { epochKey, keyName } from '../lib/music'
 import { decodeSong, encodeSong, MAX_NOTES, type Note, type Song } from '../lib/share'
+import { makePoster } from '../lib/poster'
 import { useClip } from '../lib/useClip'
 import { useToast } from '../lib/useToast'
 
@@ -90,6 +91,19 @@ export function Studio({ chogs, byId, player }: { chogs: Chog[]; byId: Map<numbe
     flash('Saved.')
   }, [song, player.specOf, flash])
 
+  const savePoster = useCallback(async () => {
+    if (song.notes.length === 0) { flash('Nothing to print yet. Put a Chog on the staff.'); return }
+    flash('Printing your poster…')
+    try {
+      const blob = await makePoster({ song, byId, title: keyName(song.root, song.mode).replace(/^./, c => c.toUpperCase()) })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = 'chog-choir-poster.png'
+      a.click()
+      flash('Poster saved.')
+    } catch (e) { flash(e instanceof Error ? e.message : 'Could not make the poster.') }
+  }, [song, byId, flash])
+
   const clear = useCallback(() => setSong(s => ({ ...s, notes: [] })), [])
 
   const brushNotes = brush ? song.notes.filter(n => n.id === brush.id).length : 0
@@ -125,6 +139,7 @@ export function Studio({ chogs, byId, player }: { chogs: Chog[]; byId: Map<numbe
           <Dock song={song} playing={player.playing} onToggle={toggle} onChange={patch}>
             <button className="btn dark" onClick={share}>Copy link</button>
             <button className="btn dark" onClick={() => clip.save(song)} disabled={clip.progress !== null}>{clip.progress !== null ? `Recording ${Math.round(clip.progress * 100)}%` : 'Save clip'}</button>
+            <button className="btn dark" onClick={savePoster}>Poster</button>
             <button className="btn dark" onClick={saveWav}>.wav</button>
           </Dock>
         </section>

@@ -3,10 +3,12 @@ import { BEATS } from '../audio/band'
 import type { Player } from '../audio/usePlayer'
 import { VOWELS } from '../audio/voice'
 import { Staff } from '../components/Staff'
-import { thumbLg, type Chog } from '../data/chogs'
+import type { Chog } from '../data/chogs'
+import { RecordSleeve } from '../components/RecordSleeve'
 import { keyName } from '../lib/music'
 import { encodeSong } from '../lib/share'
 import { songFor } from '../lib/songs'
+import { makePoster } from '../lib/poster'
 import { useClip } from '../lib/useClip'
 import { useFacePulse } from '../lib/useFacePulse'
 import { useToast } from '../lib/useToast'
@@ -69,6 +71,18 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
     try { await navigator.clipboard.writeText(url); flash(`Link copied. It opens Chog #${chog.n}'s song.`) } catch { flash('Copy the address bar to share this song.') }
   }
 
+  const savePoster = async () => {
+    flash('Printing your poster…')
+    try {
+      const blob = await makePoster({ song, byId, title: `Chog #${chog.n}`, hero: chog })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `chog-${chog.n}-poster.png`
+      a.click()
+      flash('Poster saved.')
+    } catch (e) { flash(e instanceof Error ? e.message : 'Could not make the poster.') }
+  }
+
   const style = BEATS[song.beat]
   const stage = (
     <section className="stage songs" aria-label="Chog songs">
@@ -91,9 +105,7 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
       <HolderPanel byId={byId} selectedN={chog.n} onPick={c => { setText(String(c.n)); void open(c.n) }} />
 
       <div className="hero">
-        <div className={`hero-face v${chog.spec.vowel}`} ref={faceRef}>
-          <img src={thumbLg(chog.n)} alt={`Chog #${chog.n}`} />
-        </div>
+        <RecordSleeve chog={chog} playing={player.playing} faceRef={faceRef} />
         <div className="hero-info">
           <h2>Chog #{chog.n}</h2>
           <p className="hero-meta">{keyName(song.root, song.mode)} · {song.tempo} bpm · {style.toLowerCase()} beat</p>
@@ -108,6 +120,7 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
               <span>{player.playing ? 'Pause' : 'Play'}</span>
             </button>
             <button className="btn" onClick={() => clip.save(song, `Chog #${chog.n}`, chog)} disabled={clip.progress !== null}>{clip.progress !== null ? `Recording ${Math.round(clip.progress * 100)}%` : 'Save clip'}</button>
+            <button className="btn" onClick={savePoster}>Save poster</button>
             <button className="btn" onClick={share}>Copy link</button>
           </div>
         </div>

@@ -26,6 +26,8 @@ type Props = {
 const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B']
 const noteName = (midi: number) => `${NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`
 const SOUNDS = ['ahh', 'ehh', 'eee', 'ohh', 'ooo']
+const RING = ['#ff5a47', '#ffb020', '#25cf94', '#2db4f2', '#9b6bff']
+const tilt = (id: number) => `${((id * 37) % 9) - 4}deg` // a few degrees either way, like stickers pressed on by hand
 
 export const Staff = memo(
   forwardRef<StaffHandle, Props>(function Staff({ song, byId, brush, onPlace, onRemove, readOnly, pending }, ref) {
@@ -44,6 +46,16 @@ export const Staff = memo(
           let shown = 0
           root.querySelectorAll<HTMLElement>(`.note[data-step="${step}"]`).forEach(el => {
             if (calm) return // the highlighted column already shows who is singing
+            // each note leaves a stain on the paper in its vowel's colour, which fades like wet ink
+            const slot = el.parentElement
+            if (slot) {
+              const hex = RING[Number(el.dataset.vowel)]
+              const stain = document.createElement('i')
+              stain.className = 'stain'
+              stain.style.background = `radial-gradient(circle, ${hex}d0 0%, ${hex}00 68%)`
+              slot.insertBefore(stain, slot.firstChild)
+              stain.animate([{ transform: 'scale(.45)', opacity: 0.7 }, { transform: 'scale(2.3)', opacity: 0 }], { duration: 2800, easing: 'ease-out', fill: 'forwards' }).onfinish = () => stain.remove()
+            }
             el.animate(
               [{ transform: 'scale(1)' }, { transform: 'scale(1.3) rotate(-5deg)', offset: 0.28 }, { transform: 'scale(1)' }],
               { duration: 420, easing: 'cubic-bezier(.2,.8,.3,1)' },
@@ -106,7 +118,7 @@ export const Staff = memo(
                   aria-label={note && chog ? `Chog #${chog.n}, step ${s + 1}, remove` : `Step ${s + 1}, row ${p + 1}, ${brush ? `place Chog #${brush.n}` : 'empty'}`}
                 >
                   {note && chog ? (
-                    <span className="slot">
+                    <span className="slot" style={{ ['--tilt' as string]: tilt(chog.id) } as React.CSSProperties}>
                       <img className={`note v${chog.spec.vowel}`} data-step={s} data-vowel={chog.spec.vowel} src={thumb(chog.n)} alt="" draggable={false} />
                       {(stacked.get(s * PITCHES + p) ?? 1) > 1 && <span className="stack" title="More Chogs sing this same note">+{(stacked.get(s * PITCHES + p) ?? 1) - 1}</span>}
                     </span>

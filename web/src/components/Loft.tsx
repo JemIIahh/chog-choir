@@ -124,6 +124,14 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
       const sungNow = !!st && epoch !== null && st.last === epoch + 1
       const ever = !!st && st.total > 0
       const x = lay.xs[i], y = lay.ys[i]
+      if (ever) {
+        // a soft halo, like a stage light coming up on a singer
+        const halo = g.createRadialGradient(x, y, 0, x, y, r * (sungNow ? 4.2 : 2.6))
+        halo.addColorStop(0, RING[c.spec.vowel] + (sungNow ? '88' : '40'))
+        halo.addColorStop(1, RING[c.spec.vowel] + '00')
+        g.fillStyle = halo
+        g.fillRect(x - r * 4.2, y - r * 4.2, r * 8.4, r * 8.4)
+      }
       g.beginPath()
       g.arc(x, y, ever ? r : r * 0.78, 0, Math.PI * 2)
       if (sungNow) { g.fillStyle = RING[c.spec.vowel]; g.fill() }

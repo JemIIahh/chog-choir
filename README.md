@@ -11,6 +11,7 @@ Built for Chogathon 2026. Live app: _TBD_ · Demo video: _TBD_ · Contracts: see
 | **Songs** | Type a Chog's number, hear its song. Each of the 1,969 Chogs has its own key, scale, tempo, band and hook, read from its traits. Save it as a clip or share a link. |
 | **Studio** | A staff where every note is a Chog face. Pick a Chog (it sings), tap the staff to place its note, change tempo, space, brightness, key and beat. The whole band lives in the link. |
 | **The Choir** | A shared, on-chain choir. One Chog gets one note per round, and only its owner can place it. A loft shows all 1,969 Chogs seated by voice type, lighting up as they sing. The more Chogs have sung, the fuller the band: voices, then a pad, then bass, then drums. |
+| **Posters and clips** | Every song can be saved as a video clip (a spinning record for a single Chog) or a 1080×1350 generative poster painted from the song's notes in the Chog's own colours. |
 | **Records** | Finished rounds are sealed on-chain by anyone and play back here for good. |
 
 ## How a Chog becomes a voice

@@ -27,4 +27,4 @@
 - The NFT contract is a constructor argument so one codebase serves the replica and the real collection.
 - Two deployments: mainnet with real Chogs, testnet for anyone to try.
 
-**Visual identity.** Cobalt desk, white score sheet, ink and a yellow playhead, so it does not look like the dark-purple pixel games around it. Each vowel has its own ring colour so the trait-to-sound mapping is visible. Bagel Fat One for display, Hanken Grotesk for text.
+**Visual identity.** A gig poster pulled on a risograph: ultramarine stage, paper with grain, hard offset print shadows, die-cut sticker Chogs, a two-ink misregistered wordmark. Sound paints: every note blooms in its vowel's colour behind the page and leaves a wet-ink stain on the staff. Every Chog is a record (sleeve plus a disc that slides out and spins). Each vowel has its own colour, so the trait-to-sound mapping is visible. Bagel Fat One for display, Hanken Grotesk for text. Posters sample each Chog's own artwork for their paint.

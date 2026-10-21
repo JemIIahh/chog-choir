@@ -5,6 +5,7 @@ import { thumb } from '../data/chogs'
 import { keyName, PITCHES, STEPS } from './music'
 import type { Song } from './share'
 import { BEATS } from '../audio/band'
+import { halftone, inked } from './poster'
 import { thumbLg } from '../data/chogs'
 
 const SIZE = 1080
@@ -114,67 +115,120 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
   }
 }
 
-/** One Chog, big: its face keeps time, and bubbles pop when it sings. Used for single-Chog song clips. */
+/** One Chog as a record: the sleeve pulses on the beat, the disc spins out behind it, bubbles pop when it sings. */
 function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: string) {
   const stepDur = stepSeconds(song.tempo)
   const meta = `${keyName(song.root, song.mode)}, ${song.tempo} bpm, ${BEATS[song.beat].toLowerCase()} beat`
+  const vc = RING[chog.spec.vowel]
   return (g: CanvasRenderingContext2D, { t }: Frame) => {
-    g.fillStyle = '#2a36d4'
+    const bg = g.createRadialGradient(SIZE / 2, -60, 40, SIZE / 2, 300, 1250)
+    bg.addColorStop(0, '#3a47e6'); bg.addColorStop(0.55, '#232fc4'); bg.addColorStop(1, '#141a86')
+    g.fillStyle = bg
     g.fillRect(0, 0, SIZE, SIZE)
-    g.fillStyle = '#f5f6fd'
-    round(g, 34, 34, SIZE - 68, SIZE - 68, 52); g.fill()
+    halftone(g, 30, 30, 330, 'rgba(255,79,163,.5)')
+    halftone(g, SIZE - 20, SIZE - 20, 330, 'rgba(45,180,242,.45)')
 
     g.textAlign = 'center'
-    g.fillStyle = INK
-    g.font = '44px "Bagel Fat One", system-ui, sans-serif'
-    g.fillText('Chog Choir', SIZE / 2, 118)
+    g.fillStyle = 'rgba(255,255,255,.85)'
+    g.font = '600 28px "Hanken Grotesk", system-ui, sans-serif'
+    g.fillText('CHOG CHOIR PRESENTS', SIZE / 2, 86)
 
     const elapsed = Math.max(0, t)
     const stepIdx = Math.floor(elapsed / stepDur)
     const step = stepIdx % STEPS
     const since = elapsed - stepIdx * stepDur
     const sings = t >= 0 && song.notes.some(n => n.step === step)
-    const k = t < 0 ? 1 : 1 + (sings ? 0.07 : 0.02) * Math.max(0, 1 - since / (sings ? 0.3 : 0.18))
-    const size = 470 * k
-    const cx = SIZE / 2, cy = 420
+
+    // a bloom of the vowel's colour on every note, behind the record
+    if (sings) {
+      const a = Math.max(0, 1 - since / 0.9)
+      const rad = 420 + (1 - a) * 160
+      g.save()
+      g.globalCompositeOperation = 'screen'
+      const gr = g.createRadialGradient(SIZE / 2, 440, 0, SIZE / 2, 440, rad)
+      gr.addColorStop(0, `${vc}${Math.round(a * 150).toString(16).padStart(2, '0')}`)
+      gr.addColorStop(1, `${vc}00`)
+      g.fillStyle = gr
+      g.fillRect(0, 0, SIZE, SIZE)
+      g.restore()
+    }
+
+    // the disc: grooves, a rim in the vowel's colour, a label that turns with it
+    const cx = SIZE / 2 + 150, cy = 440, R = 250
+    const spin = elapsed * 1.6
     g.save()
-    g.shadowColor = 'rgba(20,20,58,.22)'; g.shadowOffsetY = 14; g.shadowBlur = 0
-    g.fillStyle = RING[chog.spec.vowel]
-    round(g, cx - size / 2 - 12, cy - size / 2 - 12, size + 24, size + 24, 78); g.fill()
+    g.shadowColor = 'rgba(8,10,84,.5)'; g.shadowOffsetX = 10; g.shadowOffsetY = 12
+    g.fillStyle = '#12122b'
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill()
     g.restore()
     g.save()
-    round(g, cx - size / 2, cy - size / 2, size, size, 66); g.clip()
-    g.drawImage(face, cx - size / 2, cy - size / 2, size, size)
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip()
+    g.strokeStyle = 'rgba(120,120,200,.16)'; g.lineWidth = 2
+    for (let rr = R * 0.4; rr < R * 0.93; rr += 7) { g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.stroke() }
+    g.strokeStyle = vc; g.lineWidth = 9
+    g.beginPath(); g.arc(cx, cy, R * 0.88, 0, Math.PI * 2); g.stroke()
+    g.translate(cx, cy); g.rotate(spin)
+    for (const a0 of [0.25, 3.4]) {
+      const sh = g.createLinearGradient(0, 0, Math.cos(a0) * R, Math.sin(a0) * R)
+      sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(255,255,255,.16)')
+      g.fillStyle = sh
+      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, a0, a0 + 0.5); g.closePath(); g.fill()
+    }
+    g.save()
+    g.beginPath(); g.arc(0, 0, R * 0.38, 0, Math.PI * 2); g.clip()
+    g.drawImage(face, -R * 0.38, -R * 0.38, R * 0.76, R * 0.76)
+    g.restore()
+    g.strokeStyle = vc; g.lineWidth = 6
+    g.beginPath(); g.arc(0, 0, R * 0.38, 0, Math.PI * 2); g.stroke()
+    g.fillStyle = '#f5f6fd'; g.beginPath(); g.arc(0, 0, 9, 0, Math.PI * 2); g.fill()
+    g.restore()
+    g.strokeStyle = INK; g.lineWidth = 5
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke()
+
+    // the sleeve, on top, keeping time
+    const k = t < 0 ? 1 : 1 + (sings ? 0.06 : 0.015) * Math.max(0, 1 - since / (sings ? 0.3 : 0.18))
+    const sz = 400 * k
+    const sx = SIZE / 2 - 190, sy = 440
+    g.save()
+    g.translate(sx, sy); g.rotate(-0.04)
+    g.shadowColor = 'rgba(8,10,84,.55)'; g.shadowOffsetX = 12; g.shadowOffsetY = 14
+    g.fillStyle = INK
+    g.beginPath(); g.roundRect(-sz / 2 - 6, -sz / 2 - 6, sz + 12, sz + 12, 20); g.fill()
+    g.shadowColor = 'transparent'
+    g.beginPath(); g.roundRect(-sz / 2, -sz / 2, sz, sz, 14); g.clip()
+    g.drawImage(face, -sz / 2, -sz / 2, sz, sz)
     g.restore()
 
     if (sings && since < 0.8) {
       g.save()
       g.globalAlpha = Math.max(0, 1 - since / 0.8)
-      g.font = '64px "Bagel Fat One", system-ui, sans-serif'
-      g.lineWidth = 12; g.strokeStyle = '#fff'; g.lineJoin = 'round'
-      const y = cy - size / 2 - 22 - since * 70
-      g.strokeText(SOUND[chog.spec.vowel], cx, y)
-      g.fillStyle = RING[chog.spec.vowel]
-      g.fillText(SOUND[chog.spec.vowel], cx, y)
+      g.font = '70px "Bagel Fat One", system-ui, sans-serif'
+      g.lineWidth = 14; g.strokeStyle = '#fff'; g.lineJoin = 'round'
+      const y = sy - 220 - since * 70
+      g.strokeText(SOUND[chog.spec.vowel], sx + 40, y)
+      g.fillStyle = vc
+      g.fillText(SOUND[chog.spec.vowel], sx + 40, y)
       g.restore()
     }
 
-    g.fillStyle = INK
-    g.font = '86px "Bagel Fat One", system-ui, sans-serif'
-    g.fillText(title, SIZE / 2, 770)
-    g.fillStyle = '#55577f'
-    g.font = '600 32px "Hanken Grotesk", system-ui, sans-serif'
-    g.fillText(meta, SIZE / 2, 822)
+    inked(g, title, SIZE / 2, 850, '120px "Bagel Fat One", system-ui, sans-serif')
+    g.fillStyle = '#fff'
+    g.font = '700 32px "Hanken Grotesk", system-ui, sans-serif'
+    g.textAlign = 'center'
+    g.fillText(meta, SIZE / 2, 906)
 
-    // the loop, one dot per step: the dots that sing are filled, the playhead is yellow
+    // the loop, one dot per step: the ones that sing are in the vowel's colour, the playhead is yellow
     const x0 = SIZE / 2 - (STEPS - 1) * 26
     for (let s = 0; s < STEPS; s++) {
       const sing = song.notes.some(n => n.step === s)
       g.beginPath()
-      g.arc(x0 + s * 52, 910, s === step && t >= 0 ? 15 : 10, 0, Math.PI * 2)
-      g.fillStyle = s === step && t >= 0 ? '#ffd23f' : sing ? RING[chog.spec.vowel] : 'rgba(20,20,58,.16)'
+      g.arc(x0 + s * 52, 990, s === step && t >= 0 ? 15 : 10, 0, Math.PI * 2)
+      g.fillStyle = s === step && t >= 0 ? '#ffd23f' : sing ? vc : 'rgba(255,255,255,.28)'
       g.fill()
     }
+    g.fillStyle = '#fff'
+    g.font = '36px "Bagel Fat One", system-ui, sans-serif'
+    g.fillText('Chog Choir', SIZE / 2, 1052)
     g.textAlign = 'left'
   }
 }

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/usePlayer'
 import { TYPE_SHAPE, VOWELS, type VoiceType } from '../audio/voice'
-import { thumbLg, type Chog } from '../data/chogs'
+import type { Chog } from '../data/chogs'
+import { RecordSleeve } from './RecordSleeve'
 import { songFor } from '../lib/songs'
 import { useFacePulse } from '../lib/useFacePulse'
 import { HolderPanel } from './HolderPanel'
@@ -114,9 +115,7 @@ export function Onboarding({ chogs, byId, byN, player, onClose }: Props) {
 
   const face = (
     <div className="onb-face">
-      <div className={`hero-face v${chog.spec.vowel}`} ref={faceRef}>
-        <img src={thumbLg(chog.n)} alt={`Chog #${chog.n}`} />
-      </div>
+      <RecordSleeve chog={chog} playing={player.playing} faceRef={faceRef} size={190} />
       <p className="onb-cap">Chog #{chog.n}, sings <b className={`v${chog.spec.vowel}`}>{VOWELS[chog.spec.vowel].toLowerCase()}</b>, {chog.spec.voiceType} voice</p>
     </div>
   )

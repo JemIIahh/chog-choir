@@ -6,6 +6,7 @@ import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
 import { defaultNet, resolveTargets, type Net } from './chain/config'
 import { Onboarding } from './components/Onboarding'
+import { PaintBackdrop } from './components/PaintBackdrop'
 import { Choir } from './views/Choir'
 import { Records } from './views/Records'
 import { Songs } from './views/Songs'
@@ -83,9 +84,13 @@ function Shell({ chogs }: { chogs: Chog[] }) {
   }
 
   return (
-    <div className="app">
-      <header className="top">
-        <a className="mark" href="#" onClick={go('songs')}>Chog Choir</a>
+    <>
+    <PaintBackdrop player={player} byId={byId} />
+    <div className={`app ${welcome ? 'hushed' : ''}`}>
+      <header className={`top ${player.playing ? 'playing' : ''}`}>
+        <a className="mark" href="#" onClick={go('songs')} aria-label="Chog Choir">
+          {[...'Chog Choir'].map((ch, i) => <span key={i} aria-hidden style={{ ['--i' as string]: i } as React.CSSProperties}>{ch === ' ' ? '\u00a0' : ch}</span>)}
+        </a>
         <button className="how" onClick={() => setWelcome(true)} aria-label="How it works">How it works</button>
         <nav className="tabs" aria-label="Sections">
           <a href="#" className={view === 'songs' ? 'on' : ''} onClick={go('songs')} aria-current={view === 'songs' ? 'page' : undefined}>Songs</a>
@@ -100,5 +105,6 @@ function Shell({ chogs }: { chogs: Chog[] }) {
       {view === 'choir' && <Choir chogs={chogs} byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
       {view === 'records' && <Records byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
     </div>
+    </>
   )
 }
