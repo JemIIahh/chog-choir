@@ -1,0 +1,9 @@
+{
+  "name": "chog-choir-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "sharp": "^0.34.0",
+    "viem": "^2.57.7"
+  }
+}
