@@ -14,6 +14,6 @@ if ! curl -s -o /dev/null -m 2 http://127.0.0.1:5188/; then
 fi
 node e2e.mjs "$1" "$2" "$3"
 CODE=$?
-[ -n "$STARTED" ] && [ -f .vite.pid ] && kill "$(cat .vite.pid)" 2>/dev/null; rm -f .vite.pid
+if [ -n "$STARTED" ] && [ -f .vite.pid ]; then kill "$(cat .vite.pid)" 2>/dev/null; rm -f .vite.pid; fi
 [ -f .anvil.pid ] && kill "$(cat .anvil.pid)" 2>/dev/null; rm -f .anvil.pid
 exit $CODE
