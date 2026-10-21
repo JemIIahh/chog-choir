@@ -3,7 +3,6 @@ import { useSyncExternalStore } from 'react'
 // The look of the app is a set of CSS tokens (see styles.css) plus surface rules scoped by html[data-look].
 export const LOOKS = [
   { id: 'stage', name: 'Stage' },
-  { id: 'poster', name: 'Poster' },
   { id: 'sorbet', name: 'Sorbet' },
 ] as const
 export type Look = (typeof LOOKS)[number]['id']
@@ -12,7 +11,7 @@ const KEY = 'chogchoir:look'
 const EVENT = 'chogchoir:look'
 const valid = (v: unknown): v is Look => LOOKS.some(l => l.id === v)
 
-/** Before the first paint: ?look=poster wins, then the last one chosen, then Stage. */
+/** Before the first paint: ?look=sorbet wins, then the last one chosen, then Stage. */
 export function initLook() {
   let l: Look = 'stage'
   const q = new URLSearchParams(location.search).get('look')
