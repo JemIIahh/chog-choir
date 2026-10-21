@@ -38,7 +38,7 @@ await page.waitForFunction(() => document.querySelector('.stage h1')?.textConten
 assert.match(await page.textContent('.stage .sub'), /0 voices/)
 step('round 1 loads from chain, 0 voices')
 
-await page.click('button:has-text("Connect Mock wallet")')
+await page.click('button.wrow:has-text("Mock wallet")')
 await page.waitForSelector('.wallet.on')
 await page.waitForSelector('.wbtn:not(.solid)')
 step('wallet connected (the header button shows the account too)')

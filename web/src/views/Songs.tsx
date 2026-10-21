@@ -33,6 +33,11 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
   const { song, lines } = useMemo(() => songFor(chog), [chog])
   const missing = n !== null && !byN.get(n)
   useEffect(() => { setText(String(chog.n)) }, [chog.n])
+  useEffect(() => {
+    const on = () => { const m = fromHash(); if (m !== null) setN(m) }
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
 
   useEffect(() => { player.bind(song) }, [song, player])
 

@@ -20,7 +20,7 @@ export function WalletPanel({ wallet, chain, why }: { wallet: W; chain: Chain; w
   return (
     <div className="wallet">
       <p className="w-why">{why}</p>
-      <WalletChooser solid />
+      <WalletChooser />
     </div>
   )
 }

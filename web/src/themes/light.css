@@ -22,6 +22,8 @@ html[data-theme='light'] {
   --dock-fg: #ffffff;
   --print: rgba(90, 60, 150, 0.22);
   --focus: #7c5cff;
+  --modal-bg: #ffffff;
+  --scrim: rgba(28, 26, 38, 0.32);
   --paint-op: multiply;
   --paint-blend: multiply;
   --stain-blend: multiply;

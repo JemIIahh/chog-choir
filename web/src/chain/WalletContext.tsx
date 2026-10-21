@@ -24,6 +24,8 @@ type Ctx = {
   /** the wallet menu in the header */
   menuOpen: boolean
   setMenuOpen(open: boolean): void
+  /** the wallet connected last time, if the visitor did not disconnect */
+  last: string | null
 }
 
 const Wallet = createContext<Ctx | null>(null)
@@ -36,6 +38,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [last] = useState<string | null>(() => { try { return localStorage.getItem(KEY) } catch { return null } })
 
   // find the wallets in this browser, and quietly pick up the one connected last time (no prompt)
   useEffect(() => {
@@ -93,7 +96,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => { live = false }
   }, [account])
 
-  const value = useMemo(() => ({ wallets, found, account, held, busy, error, connect, disconnect, menuOpen, setMenuOpen }), [wallets, found, account, held, busy, error, connect, disconnect, menuOpen])
+  const value = useMemo(() => ({ wallets, found, account, held, busy, error, connect, disconnect, menuOpen, setMenuOpen, last }), [wallets, found, account, held, busy, error, connect, disconnect, menuOpen, last])
   return <Wallet.Provider value={value}>{children}</Wallet.Provider>
 }
 

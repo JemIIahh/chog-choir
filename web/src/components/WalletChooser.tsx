@@ -1,20 +1,51 @@
+import { useState } from 'react'
 import { useWalletCtx } from '../chain/WalletContext'
+import { WalletIcon } from './WalletIcon'
 
-/** The wallets found in this browser, one button each. Used by the header menu, Songs, the welcome and the Choir. */
-export function WalletChooser({ solid, onDone }: { solid?: boolean; onDone?(): void }) {
-  const { wallets, busy, error, connect } = useWalletCtx()
-  if (wallets === null) return <p className="w-note">Looking for wallets…</p>
+/** The wallets found in this browser as rows: icon, name, a hint. Used by the connect modal, the welcome and the Choir. */
+export function WalletChooser({ onDone }: { onDone?(): void }) {
+  const { wallets, busy, error, connect, last } = useWalletCtx()
+  const [pending, setPending] = useState<string | null>(null)
+
+  if (wallets === null)
+    return (
+      <div className="w-rows" aria-busy="true" aria-label="Looking for wallets">
+        <div className="wskel" /><div className="wskel" />
+      </div>
+    )
   if (wallets.length === 0)
-    return <p className="w-note">No wallet found in this browser. You can still listen to everything here. To sing, install a wallet such as MetaMask or Rabby, then reload.</p>
+    return (
+      <div className="wempty">
+        <WalletIcon size={52} />
+        <b>No wallet found in this browser</b>
+        <p>You can still listen to everything here. To sing, install a wallet, then reload this page.</p>
+        <div className="wget">
+          <a className="btn small" href="https://metamask.io/download/" target="_blank" rel="noreferrer">Get MetaMask</a>
+          <a className="btn small" href="https://rabby.io/" target="_blank" rel="noreferrer">Get Rabby</a>
+        </div>
+      </div>
+    )
+  // the one used last time first
+  const list = [...wallets].sort((a, b) => Number((b.rdns ?? b.name) === last) - Number((a.rdns ?? a.name) === last))
   return (
     <>
-      <div className="w-list">
-        {wallets.map(w => (
-          <button key={w.rdns ?? w.name} className={`btn ${solid ? 'solid' : ''}`} disabled={busy} onClick={async () => { if (await connect(w)) onDone?.() }}>
-            {w.icon && <img src={w.icon} alt="" width={20} height={20} />}
-            {busy ? 'Waiting for your wallet…' : `Connect ${w.name}`}
-          </button>
-        ))}
+      <div className="w-rows" role="list">
+        {list.map(w => {
+          const id = w.rdns ?? w.name
+          const waiting = busy && pending === id
+          return (
+            <button key={id} role="listitem" className="wrow" disabled={busy} onClick={async () => { setPending(id); const ok = await connect(w); setPending(null); if (ok) onDone?.() }}>
+              <WalletIcon w={w} />
+              <span className="wtext">
+                <b>{w.name}</b>
+                <small>{waiting ? 'Waiting for your wallet…' : id === last ? 'Last used' : 'Detected'}</small>
+              </span>
+              {waiting ? <span className="spin" aria-hidden /> : (
+                <svg className="wchev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 5l7 7-7 7" /></svg>
+              )}
+            </button>
+          )
+        })}
       </div>
       {error && <p className="w-err" role="alert">{error}</p>}
     </>

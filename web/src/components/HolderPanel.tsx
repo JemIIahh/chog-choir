@@ -34,7 +34,7 @@ export function HolderPanel({ byId, onPick, selectedN, inline }: Props) {
     <div className="holder">
       <p className="holder-line">
         Own a Chog? Connect your wallet to see yours here.
-        {!inline && <button className="btn small" onClick={() => { setMenuOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Connect wallet</button>}
+        {!inline && <button className="btn small" onClick={() => setMenuOpen(true)}>Connect wallet</button>}
       </p>
       {inline && <WalletChooser />}
       {inline && <span className="holder-fine">Connecting only reads which Chogs you hold. Nothing is signed or sent.</span>}

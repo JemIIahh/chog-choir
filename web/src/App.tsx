@@ -103,7 +103,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
         <div className="top-tools">
           <button className="how" onClick={() => setWelcome(true)} aria-label="How it works">How it works</button>
           <ThemeToggle />
-          <WalletButton />
+          <WalletButton byId={byId} />
         </div>
       </header>
       {welcome && <Onboarding chogs={chogs} byId={byId} byN={byN} player={player} onClose={closeWelcome} />}
