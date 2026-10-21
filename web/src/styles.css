@@ -191,7 +191,7 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 
 /* ───────────── nav ───────────── */
 .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.14); }
-.tabs a { padding: 8px 18px; border-radius: 99px; color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
+.tabs a { white-space: nowrap; padding: 8px 18px; border-radius: 99px; color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
 .tabs a:hover { background: rgba(255, 255, 255, 0.14); }
 .tabs a.on { background: #fff; color: var(--ink); }
 .soon { color: #fff; padding: 40px 4px; }
@@ -288,3 +288,5 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 .thumb { position: relative; }
 .streak { position: absolute; right: 2px; bottom: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--sun); color: var(--ink); font-size: 11px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
 .stage .staff { --cell-h: 36px; }
+
+@media (max-width: 640px) { .tabs a { padding: 8px 12px; font-size: 13px; } .mark { font-size: 28px; } }

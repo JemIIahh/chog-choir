@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { renderSong } from './audio/render'
+import { songFor } from './lib/songs'
 import { usePlayer } from './audio/usePlayer'
 import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
@@ -47,6 +48,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
     ;(window as unknown as { __choir: unknown }).__choir = {
       chogs,
       song: player.current,
+      songFor,
       render: async (s: Song, loops = 1) => {
         const buf = await renderSong(s, player.specOf, loops)
         return { rate: buf.sampleRate, left: Array.from(buf.getChannelData(0)), right: Array.from(buf.getChannelData(1)) }

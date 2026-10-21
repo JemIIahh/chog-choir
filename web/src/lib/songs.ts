@@ -10,6 +10,42 @@ import type { Note, Song } from './share'
 const MODE_OF_VOWEL = [1, 3, 2, 0, 4] // AH major pent, EH mixolydian, EE dorian, OH minor pent, OO hirajoshi
 const MOOD = ['bright and open', 'warm and bluesy', 'cool and sleek', 'moody and low', 'dreamy and strange']
 
+// Each Background colour plays one band style. Assigned once, balanced so the three styles are about equally common.
+const BEAT_OF_BACKGROUND: Record<string, number> = {
+  "Afternoon Orange": 1,
+  "Aqua": 3,
+  "Aqua Blue": 3,
+  "Aqua Mint": 1,
+  "Blood Red": 1,
+  "Bright Yellow": 3,
+  "Coral Pink": 2,
+  "Deep Aqua": 3,
+  "Deep Blue": 2,
+  "Deep Purple": 1,
+  "Fresh Green": 2,
+  "Gold": 1,
+  "Lemon": 2,
+  "Lemon Yellow": 1,
+  "Light Magenta": 2,
+  "Light Purple": 1,
+  "Lime Green": 1,
+  "Magenta": 1,
+  "Mint": 1,
+  "Mon": 3,
+  "Noble Blue": 3,
+  "Peach Pink": 3,
+  "Radioactive": 3,
+  "Red Sky": 1,
+  "Rose Pink": 1,
+  "Rosie": 3,
+  "Rosy Pink": 2,
+  "Royal Blue": 1,
+  "Sky Blue": 3,
+  "Soft Lavender": 1,
+  "Sunlight": 2,
+  "Supreme Purple": 3,
+}
+
 const has = (v: string, ...w: string[]) => w.some(x => v.toLowerCase().includes(x))
 
 function tempoOf(eyes: string): { bpm: number; feel: string } {
@@ -28,7 +64,7 @@ export function songFor(c: Chog): SongInfo {
   const mode = MODE_OF_VOWEL[c.spec.vowel]
   const root = hash('root:' + (t.Body ?? c.id)) % 12
   const { bpm, feel } = tempoOf(t.Eyes ?? '')
-  const beat = 1 + (hash('beat:' + (t.Background ?? c.id)) % 3)
+  const beat = BEAT_OF_BACKGROUND[t.Background ?? ''] ?? 1 + (hash('beat:' + (t.Background ?? c.id)) % 3)
 
   // the hook: the Chog's own phrase, plus the same voice a third above on the strong beats
   const hook = phraseFor(c.id, c.spec)
