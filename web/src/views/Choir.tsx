@@ -3,7 +3,7 @@ import { formatUnits, type Address } from 'viem'
 import { VOWELS } from '../audio/voice'
 import type { Player } from '../audio/usePlayer'
 import {
-  approveToken, claimChog, encoreNote, encoresOn, explain, isClaimed, makeReader, placeNote, readCollective, readEncored, readHeld, readLoft,
+  approveToken, claimChog, encoreNote, encoresOn, explain, isClaimed, makeReader, placeMany, placeNote, readCollective, readEncored, readHeld, readLoft,
   readPrice, readRound, readSung, readToken, tokenFaucet, type LoftStat, type Reader, type Round,
 } from '../chain/client'
 import { monadMainnet, REAL_CHOG, type Deployment, type Net, type Target } from '../chain/config'
@@ -14,6 +14,7 @@ import { NetSwitch } from '../components/NetSwitch'
 import { Staff } from '../components/Staff'
 import { WalletPanel } from '../components/WalletPanel'
 import { thumb, type Chog } from '../data/chogs'
+import { autoNotes, chunk, previewOrder, previewVoices } from '../lib/choirnotes'
 import { epochKey, keyName } from '../lib/music'
 import { type Song } from '../lib/share'
 import { useClip } from '../lib/useClip'
@@ -69,7 +70,8 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
   const offset = useRef(0)
 
   const [stats, setStats] = useState<LoftStat[] | null>(null)
-  const [collective, setCollective] = useState({ voices: 0, singers: 0 })
+  const [collective, setCollective] = useState<{ voices: number; singers: number; burned: bigint }>({ voices: 0, singers: 0, burned: 0n })
+  const [previewTo, setPreviewTo] = useState<number | null>(null) // null = the live round
 
   const [controls, setControls] = useState({ tempo: 84, space: 55, bright: 55, beat: 1 })
   const [held, setHeld] = useState<number[] | null>(null)
@@ -88,6 +90,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
   const priceText = Number(formatUnits(price, 18)).toLocaleString()
   const encores = encoresOn(d)
   const sandbox = !!d.faucet // testnet copy: free Chogs and free test tokens
+  const say = useCallback((e: unknown) => explain(e, { testnet: !!d.faucet }), [d.faucet])
 
   // ── the round and the community, straight from the chain
   const refresh = useCallback(async () => {
@@ -97,9 +100,9 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
       setRound(r)
       setLoadErr(null)
     } catch (e) {
-      setLoadErr(explain(e))
+      setLoadErr(say(e))
     }
-  }, [reader, d])
+  }, [reader, d, say])
 
   const refreshStats = useCallback(async () => {
     try {
@@ -124,8 +127,23 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
   useEffect(() => { if (round && remaining <= -1) void refresh() }, [round, remaining, refresh])
 
   const key = useMemo(() => (round ? epochKey(round.epoch) : { root: 0, mode: 0 }), [round])
-  const layers = layersFor(collective.singers)
-  const song: Song = useMemo(() => ({ ...controls, ...key, layers, notes: round?.notes ?? [] }), [controls, key, layers, round?.notes])
+
+  // "what if more Chogs sang": stand-in voices for Chogs that have not, played and drawn but never sent to the chain
+  const order = useMemo(() => previewOrder(chogs), [chogs])
+  const roundIds = useMemo(() => new Set((round?.notes ?? []).map(n => n.id)), [round?.notes])
+  const live = roundIds.size
+  const previewing = previewTo !== null && previewTo > live
+  const stand = useMemo(() => (previewing ? previewVoices(order, previewTo! - live, roundIds, round?.notes ?? []) : []), [previewing, previewTo, live, order, roundIds, round?.notes])
+  const singersNow = previewing ? Math.max(collective.singers, previewTo!) : collective.singers
+  const layers = layersFor(singersNow)
+  const notes = useMemo(() => (stand.length ? [...(round?.notes ?? []), ...stand] : round?.notes ?? []), [stand, round?.notes])
+  const song: Song = useMemo(() => ({ ...controls, ...key, layers, notes }), [controls, key, layers, notes])
+  const loftStats = useMemo(() => {
+    if (!stats || stand.length === 0 || !round) return stats
+    const next = stats.slice()
+    for (const n of stand) { const st = next[n.id - 1]; next[n.id - 1] = { total: st.total + 1, last: round.epoch + 1, streak: Math.max(1, st.streak), best: Math.max(1, st.best) } }
+    return next
+  }, [stats, stand, round])
   useEffect(() => { player.bind(song) }, [song, player])
 
   // ── who this wallet can sing for
@@ -156,6 +174,9 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
     void readEncored(reader, d, round.epoch, held).then(setEncored).catch(() => setEncored(new Set()))
   }, [round?.epoch, round?.notes.length, held, reader, d]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const mine = useMemo(() => held ?? [], [held])
+  const mineSet = useMemo(() => new Set(mine), [mine])
+  const free = useMemo(() => mine.filter(id => !sung.has(id)), [mine, sung])
   const brush = brushId ? byId.get(brushId) ?? null : null
   const owns = !!(brush && held?.includes(brush.id))
   const canSing = !!(session && brush && owns && !sung.has(brush.id))
@@ -186,27 +207,44 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
     try {
       await after(await placeNote(reader, session, d, brush.id, cell.step, cell.pitch))
       flash(`Chog #${brush.n} is in the choir.`)
-    } catch (e) { flash(explain(e)) } finally { setBusy(null) }
+    } catch (e) { flash(say(e)) } finally { setBusy(null) }
   }, [session, brush, cell, reader, d, after, flash])
+
+  const singAll = useCallback(async () => {
+    if (!session || !round) return
+    const todo = free.map(id => byId.get(id)).filter((c): c is Chog => !!c)
+    const batches = chunk(autoNotes(todo, round.notes), 25)
+    let done = 0
+    try {
+      for (const b of batches) {
+        setBusy(`Singing ${done + 1}–${done + b.length} of ${todo.length}…`)
+        await after(await placeMany(reader, session, d, b))
+        done += b.length
+      }
+      flash(done === 1 ? 'Your Chog is in the choir.' : `${done} of your Chogs are in the choir.`)
+    } catch (e) {
+      flash(done > 0 ? `${done} Chogs sang, then it stopped: ${say(e)}` : say(e))
+    } finally { setBusy(null) }
+  }, [session, round, free, byId, reader, d, after, flash, say])
 
   const encore = useCallback(async () => {
     if (!session || !brush || !cell) return
     try {
       if (!tok || tok.allowance < price) {
         setBusy('Approve $CHOG in your wallet…')
-        await approveToken(reader, session, d)
+        await approveToken(reader, session, d, price)
         await loadToken()
       }
       setBusy('Burning $CHOG for the encore…')
       await after(await encoreNote(reader, session, d, brush.id, cell.step, cell.pitch))
       flash(`Encore! Chog #${brush.n} sings again. ${priceText} $CHOG burned.`)
-    } catch (e) { flash(explain(e)) } finally { setBusy(null) }
+    } catch (e) { flash(say(e)) } finally { setBusy(null) }
   }, [session, brush, cell, tok, price, priceText, reader, d, after, loadToken, flash])
 
   const getTokens = useCallback(async () => {
     if (!session) return
     setBusy('Getting test $CHOG…')
-    try { await tokenFaucet(reader, session, d); await loadToken(); flash('1,000 test $CHOG added.') } catch (e) { flash(explain(e)) } finally { setBusy(null) }
+    try { await tokenFaucet(reader, session, d); await loadToken(); flash('1,000 test $CHOG added.') } catch (e) { flash(say(e)) } finally { setBusy(null) }
   }, [session, reader, d, loadToken, flash])
 
   const claim = useCallback(async (id: number) => {
@@ -218,7 +256,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
       await loadHeld()
       setBrushId(id)
       flash(`Claimed Chog #${byId.get(id)?.n ?? id}. It is yours on testnet.`)
-    } catch (e) { flash(explain(e)) } finally { setBusy(null) }
+    } catch (e) { flash(say(e)) } finally { setBusy(null) }
   }, [session, reader, d, byId, loadHeld, flash])
 
   const claimRandom = useCallback(async () => {
@@ -233,12 +271,9 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
     } finally { setBusy(null) }
   }, [session, reader, d.nft, chogs.length, claim, flash])
 
-  const voices = round?.notes.length ?? 0
+  const voices = notes.length
   const explorer = target.chain.blockExplorers?.default.url
-  const mine = held ?? []
-  const mineSet = useMemo(() => new Set(mine), [mine])
-  const free = mine.filter(id => !sung.has(id))
-  const nextLayer = LAYERS.find(l => collective.singers < l.at)
+  const nextLayer = LAYERS.find(l => singersNow < l.at)
   const lowToken = !!tok && tok.balance < price
   const doneFor = (id: number) => sung.has(id) && !(encores && !encored.has(id))
 
@@ -258,21 +293,22 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
 
           <div className="community">
             <div className="c-nums">
-              <b>{collective.singers.toLocaleString()}</b> of {chogs.length.toLocaleString()} Chogs have sung
+              <b>{singersNow.toLocaleString()}</b> of {chogs.length.toLocaleString()} Chogs {previewing ? 'singing (preview)' : 'have sung'}
               <span>{collective.voices.toLocaleString()} voices so far</span>
+              {encores && collective.burned > 0n && <span className="burned">{Number(formatUnits(collective.burned, 18)).toLocaleString()} $CHOG burned</span>}
             </div>
             <div className="c-meter" aria-hidden>
-              <i style={{ width: `${Math.min(100, (collective.singers / (nextLayer?.at ?? chogs.length)) * 100)}%` }} />
+              <i style={{ width: `${Math.min(100, (singersNow / (nextLayer?.at ?? chogs.length)) * 100)}%` }} />
             </div>
             <p className="c-next">
               {nextLayer
-                ? `${nextLayer.at - collective.singers} more ${nextLayer.at - collective.singers === 1 ? 'Chog' : 'Chogs'} and ${nextLayer.name} join the choir.`
+                ? `${nextLayer.at - singersNow} more ${nextLayer.at - singersNow === 1 ? 'Chog' : 'Chogs'} and ${nextLayer.name} join the choir.`
                 : 'The whole band is playing. Every Chog that sings keeps it going.'}
               {' '}Right now: {LAYERS.slice(0, layers + 1).map(l => l.name).join(', ')}.
             </p>
           </div>
 
-          <Loft chogs={chogs} stats={stats} epoch={round?.epoch ?? null} mine={mineSet} selectedId={brushId} onPick={c => (mineSet.has(c.id) ? pick(c) : player.hear(c, Math.round((c.spec.low + c.spec.high) / 2)))} />
+          <Loft chogs={chogs} stats={loftStats} epoch={round?.epoch ?? null} mine={mineSet} selectedId={brushId} onPick={c => (mineSet.has(c.id) ? pick(c) : player.hear(c, Math.round((c.spec.low + c.spec.high) / 2)))} />
 
           <div className="staff-wrap">
             <Staff
@@ -290,8 +326,16 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
           </div>
 
           <Dock song={song} playing={player.playing} onToggle={player.toggle} onChange={p => setControls(c => ({ ...c, ...p }))} keyLocked>
-            <button className="btn dark" onClick={() => clip.save({ ...song, layers }, `Round ${(round?.epoch ?? 0) + 1}`)} disabled={clip.progress !== null || voices === 0}>{clip.progress !== null ? `Recording ${Math.round(clip.progress * 100)}%` : 'Save clip'}</button>
+            <button className="btn dark" onClick={() => clip.save({ ...song, layers }, `Round ${(round?.epoch ?? 0) + 1}${previewing ? ' preview' : ''}`)} disabled={clip.progress !== null || voices === 0}>{clip.progress !== null ? `Recording ${Math.round(clip.progress * 100)}%` : 'Save clip'}</button>
           </Dock>
+          <label className={`fill ${previewing ? 'on' : ''}`}>
+            <span className="fill-top">
+              <span>What if more Chogs sing?</span>
+              <output>{previewing ? `${previewTo} Chogs · preview, not on the chain` : `${live} ${live === 1 ? 'Chog' : 'Chogs'} · live`}</output>
+            </span>
+            <input type="range" min={0} max={400} value={previewTo ?? live} aria-label="Preview a bigger choir" onChange={e => { const v = Number(e.target.value); setPreviewTo(v > live ? v : null) }} style={{ ['--p' as string]: `${((previewTo ?? live) / 400) * 100}%` } as React.CSSProperties} />
+            {previewing && <button type="button" className="btn small" onClick={() => setPreviewTo(null)}>Back to live</button>}
+          </label>
           <p className="fine">The chain picks each round&apos;s key, so everyone sings in the same one. A round lasts {d.epochSeconds >= 3600 ? `${d.epochSeconds / 3600} ${d.epochSeconds === 3600 ? 'hour' : 'hours'}` : `${Math.round(d.epochSeconds / 60)} minutes`}.</p>
         </section>
 
@@ -335,7 +379,8 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
                 {sandbox && realHeld.length > 0 && (
                   <div className="mine">
                     <h3>Your real Chogs on Monad</h3>
-                    <p className="w-note">You hold {realHeld.length} on mainnet. Tap one to claim the same Chog on testnet.</p>
+                    <p className="w-note">You hold {realHeld.length} on mainnet. Sing with them for real, or tap one to claim the same Chog on testnet.</p>
+                    {targets.main.deployment && <button className="btn solid" onClick={() => setNet('main')}>Sing with my real Chogs on Monad</button>}
                     <div className="thumbs row">
                       {realHeld.map(id => {
                         const c = byId.get(id)!
@@ -350,6 +395,12 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
                 )}
 
                 <div className="act">
+                  {free.length >= 2 && (
+                    <button className="btn solid big" disabled={!!busy} onClick={singAll}>
+                      {busy?.startsWith('Singing') ? busy : `Sing with all ${free.length} of your Chogs`}
+                    </button>
+                  )}
+                  {free.length >= 2 && !brush && <p className="w-note">Each Chog sings a note from its own phrase, {free.length > 25 ? `${Math.ceil(free.length / 25)} transactions of up to 25 Chogs` : 'in one transaction'}. Or pick one Chog and place its note by hand.</p>}
                   {!brush ? (
                     <p className="w-note">{free.length > 0 ? 'Pick one of your Chogs, then tap a cell on the staff.' : mine.length > 0 ? (encores ? 'All your Chogs have sung this round. Pick one to take an encore.' : 'All your Chogs have sung this round.') : ''}</p>
                   ) : !owns ? (

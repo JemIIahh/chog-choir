@@ -236,8 +236,11 @@ contract ChogChoirTest is Test {
         choir.encore(1, 8, 4);
         vm.stopPrank();
         assertEq(choir.noteCount(0), 2);
-        assertEq(token.balanceOf(choir.DEAD()), 100 ether);
+        // a real burn: the tokens are gone from circulation, not parked somewhere
+        assertEq(token.balanceOf(address(choir)), 0);
         assertEq(token.balanceOf(alice), 900 ether);
+        assertEq(token.totalSupply(), 900 ether);
+        assertEq(choir.totalBurned(), 100 ether);
         assertTrue(choir.encored(0, 1));
         assertEq(choir.voices(), 2);
         // an encore is not a new singer and does not change the streak
@@ -299,4 +302,213 @@ contract ChogChoirTest is Test {
         choir.seal(0);
         assertEq(choir.notesOf(0).length, 2);
     }
+
+    // ───────────── real burn, totals, edge cases ─────────────
+
+    function test_totalBurnedAddsUpAcrossEncores() public {
+        _fund(alice);
+        vm.startPrank(alice);
+        choir.place(1, 0, 0);
+        choir.place(2, 1, 1);
+        choir.encore(1, 2, 2);
+        choir.encore(2, 3, 3);
+        vm.stopPrank();
+        assertEq(choir.totalBurned(), 200 ether);
+        assertEq(token.totalSupply(), 800 ether);
+    }
+
+    function test_encoreWithoutApprovalChangesNothing() public {
+        vm.startPrank(alice);
+        token.faucet(); // funded, but never approved the choir
+        choir.place(1, 0, 0);
+        vm.expectRevert(); // ERC20InsufficientAllowance
+        choir.encore(1, 1, 1);
+        vm.stopPrank();
+        assertFalse(choir.encored(0, 1));
+        assertEq(choir.noteCount(0), 1);
+        assertEq(choir.totalBurned(), 0);
+        assertEq(token.balanceOf(alice), 1000 ether);
+    }
+
+    function test_encoreExactApprovalIsEnough() public {
+        vm.startPrank(alice);
+        token.faucet();
+        token.approve(address(choir), 100 ether); // exactly the price, not unlimited
+        choir.place(1, 0, 0);
+        choir.encore(1, 1, 1);
+        vm.stopPrank();
+        assertEq(token.allowance(alice, address(choir)), 0);
+    }
+
+    function test_encoreRevertsIfTokenSaysNo() public {
+        ChogChoir picky = new ChogChoir(address(nft), EPOCH, address(new RefusingToken()), 100 ether);
+        vm.startPrank(alice);
+        picky.place(1, 0, 0);
+        vm.expectRevert(ChogChoir.BurnFailed.selector);
+        picky.encore(1, 1, 1);
+        vm.stopPrank();
+        assertEq(picky.noteCount(0), 1);
+        assertEq(picky.totalBurned(), 0);
+    }
+
+    function test_encoreRevertsIfBurnFails() public {
+        ChogChoir stuck = new ChogChoir(address(nft), EPOCH, address(new UnburnableToken()), 100 ether);
+        vm.startPrank(alice);
+        stuck.place(1, 0, 0);
+        vm.expectRevert(bytes("no burn"));
+        stuck.encore(1, 1, 1);
+        vm.stopPrank();
+        assertFalse(stuck.encored(0, 1));
+        assertEq(stuck.totalBurned(), 0);
+    }
+
+    // ───────────── placeMany ─────────────
+
+    function _batch(uint16 a, uint16 b) internal pure returns (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) {
+        ids = new uint16[](2);
+        steps = new uint8[](2);
+        pitches = new uint8[](2);
+        ids[0] = a; ids[1] = b;
+        steps[0] = 3; steps[1] = 9;
+        pitches[0] = 4; pitches[1] = 10;
+    }
+
+    function test_placeManySingsForSeveralChogsAtOnce() public {
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 2);
+        vm.prank(alice);
+        choir.placeMany(ids, steps, pitches);
+        assertEq(choir.noteCount(0), 2);
+        assertTrue(choir.hasSung(0, 1));
+        assertTrue(choir.hasSung(0, 2));
+        assertEq(choir.voices(), 2);
+        assertEq(choir.singers(), 2);
+        uint32[] memory n = choir.notesOf(0);
+        assertEq(n[0], choir.pack(1, 3, 4));
+        assertEq(n[1], choir.pack(2, 9, 10));
+        (uint32 total,, uint16 streak,) = choir.stats(2);
+        assertEq(total, 1);
+        assertEq(streak, 1);
+    }
+
+    function test_placeManyIsAllOrNothing() public {
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 3); // 3 is bob's
+        vm.prank(alice);
+        vm.expectRevert(ChogChoir.NotYourChog.selector);
+        choir.placeMany(ids, steps, pitches);
+        assertEq(choir.noteCount(0), 0);
+        assertFalse(choir.hasSung(0, 1));
+        assertEq(choir.singers(), 0);
+    }
+
+    function test_placeManyRejectsAChogThatAlreadySang() public {
+        vm.prank(alice);
+        choir.place(1, 0, 0);
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 2);
+        vm.prank(alice);
+        vm.expectRevert(ChogChoir.AlreadySang.selector);
+        choir.placeMany(ids, steps, pitches);
+        assertEq(choir.noteCount(0), 1);
+        assertFalse(choir.hasSung(0, 2));
+    }
+
+    function test_placeManyRejectsTheSameChogTwice() public {
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 1);
+        vm.prank(alice);
+        vm.expectRevert(ChogChoir.AlreadySang.selector);
+        choir.placeMany(ids, steps, pitches);
+    }
+
+    function test_placeManyChecksShapeAndRange() public {
+        uint16[] memory none = new uint16[](0);
+        uint8[] memory noneU = new uint8[](0);
+        vm.startPrank(alice);
+        vm.expectRevert(ChogChoir.BadBatch.selector);
+        choir.placeMany(none, noneU, noneU);
+
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 2);
+        uint8[] memory short = new uint8[](1);
+        vm.expectRevert(ChogChoir.BadBatch.selector);
+        choir.placeMany(ids, short, pitches);
+        vm.expectRevert(ChogChoir.BadBatch.selector);
+        choir.placeMany(ids, steps, short);
+
+        steps[1] = 16;
+        vm.expectRevert(ChogChoir.OutOfRange.selector);
+        choir.placeMany(ids, steps, pitches);
+        vm.stopPrank();
+    }
+
+    function test_placeManyKeepsStreaksPerChog() public {
+        (uint16[] memory ids, uint8[] memory steps, uint8[] memory pitches) = _batch(1, 2);
+        for (uint256 r = 0; r < 3; r++) {
+            vm.prank(alice);
+            choir.placeMany(ids, steps, pitches);
+            vm.warp(block.timestamp + EPOCH);
+        }
+        (, , uint16 streak, uint16 best) = choir.stats(1);
+        assertEq(streak, 3);
+        assertEq(best, 3);
+        assertEq(choir.singers(), 2);
+        assertEq(choir.voices(), 6);
+    }
+
+    function test_placeManyGasForAWhale() public {
+        // the biggest holder on mainnet has 73 Chogs; make sure one transaction for 73 stays far below a block
+        vm.startPrank(alice);
+        for (uint256 i = 10; i < 83; i++) nft.claim(i);
+        uint16[] memory ids = new uint16[](73);
+        uint8[] memory steps = new uint8[](73);
+        uint8[] memory pitches = new uint8[](73);
+        for (uint256 i = 0; i < 73; i++) { ids[i] = uint16(10 + i); steps[i] = uint8(i % 16); pitches[i] = uint8(i % 12); }
+        uint256 g = gasleft();
+        choir.placeMany(ids, steps, pitches);
+        uint256 used = g - gasleft();
+        vm.stopPrank();
+        assertEq(choir.noteCount(0), 73);
+        assertLt(used, 12_000_000);
+    }
+
+    // ───────────── rounds line up with the clock ─────────────
+
+    function test_roundsStartOnMultiplesOfTheirLength() public {
+        vm.warp(1_700_000_123);
+        ChogChoir c = new ChogChoir(address(nft), 1 days, address(0), 0);
+        assertEq(c.startTime() % 1 days, 0);
+        assertEq(c.epochStart(0), c.startTime());
+        assertEq(c.epochStart(1) % 1 days, 0);
+        assertEq(c.currentEpoch(), 0);
+        vm.warp(c.epochStart(1) - 1);
+        assertEq(c.currentEpoch(), 0);
+        vm.warp(c.epochStart(1));
+        assertEq(c.currentEpoch(), 1);
+        // an on-the-hour choir deployed exactly on the hour starts a full round straight away
+        vm.warp(1_700_000_000 - (1_700_000_000 % 1800));
+        ChogChoir h = new ChogChoir(address(nft), 1800, address(0), 0);
+        assertEq(h.startTime(), block.timestamp);
+    }
+
+    // ───────────── constructor guards ─────────────
+
+    function test_constructorNeedsRealContracts() public {
+        vm.expectRevert(ChogChoir.NotAContract.selector);
+        new ChogChoir(makeAddr("not a nft"), EPOCH, address(0), 0);
+        vm.expectRevert(ChogChoir.NotAContract.selector);
+        new ChogChoir(address(nft), EPOCH, makeAddr("not a token"), 100 ether);
+        vm.expectRevert(bytes("bad args"));
+        new ChogChoir(address(nft), 0, address(0), 0);
+        vm.expectRevert(bytes("free encore"));
+        new ChogChoir(address(nft), EPOCH, address(token), 0);
+    }
+}
+
+/// A token that answers `false` instead of reverting when it cannot move funds.
+contract RefusingToken {
+    function transferFrom(address, address, uint256) external pure returns (bool) { return false; }
+    function burn(uint256) external pure {}
+}
+
+/// A token whose burn always reverts.
+contract UnburnableToken {
+    function transferFrom(address, address, uint256) external pure returns (bool) { return true; }
+    function burn(uint256) external pure { revert("no burn"); }
 }

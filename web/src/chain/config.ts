@@ -8,7 +8,7 @@ export const monadTestnet = defineChain({
   id: 10143,
   name: 'Monad Testnet',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] } },
+  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz', 'https://rpc-testnet.monadinfra.com', 'https://rpc.ankr.com/monad_testnet'] } },
   blockExplorers: { default: { name: 'MonadVision', url: 'https://testnet.monadexplorer.com' } },
   contracts: { multicall3: { address: MULTICALL3 } },
 })
@@ -17,7 +17,7 @@ export const monadMainnet = defineChain({
   id: 143,
   name: 'Monad',
   nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-  rpcUrls: { default: { http: ['https://rpc.monad.xyz'] } },
+  rpcUrls: { default: { http: ['https://rpc.monad.xyz', 'https://rpc1.monad.xyz', 'https://rpc-mainnet.monadinfra.com'] } },
   blockExplorers: { default: { name: 'MonadVision', url: 'https://monadvision.com' } },
   contracts: { multicall3: { address: MULTICALL3 } },
 })
@@ -61,4 +61,17 @@ export function resolveTargets(): Record<Net, Target> {
   return out
 }
 
-export const defaultNet = (t: Record<Net, Target>): Net => (t.main.deployment ? 'main' : 'test')
+const NET_KEY = 'chogchoir:net'
+export const rememberNet = (n: Net) => { try { localStorage.setItem(NET_KEY, n) } catch { /* private mode: it just will not be remembered */ } }
+
+/**
+ * Where a visitor lands. ?net=main|test wins, then their last choice, then the free testnet copy: most visitors (and every judge)
+ * do not hold a real Chog, and the testnet choir is the one they can sing in. Real holders are offered the switch in the Choir.
+ */
+export function defaultNet(t: Record<Net, Target>): Net {
+  const ok = (n: string | null): n is Net => (n === 'main' || n === 'test') && !!t[n].deployment
+  const q = new URLSearchParams(location.search).get('net')
+  if (ok(q)) return q
+  try { const saved = localStorage.getItem(NET_KEY); if (ok(saved)) return saved } catch { /* ignore */ }
+  return t.test.deployment ? 'test' : 'main'
+}

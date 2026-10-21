@@ -4,7 +4,7 @@ import { songFor } from './lib/songs'
 import { usePlayer } from './audio/usePlayer'
 import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
-import { defaultNet, resolveTargets, type Net } from './chain/config'
+import { defaultNet, rememberNet, resolveTargets, type Net } from './chain/config'
 import { Onboarding } from './components/Onboarding'
 import { ThemeToggle } from './components/ThemeToggle'
 import { WalletButton } from './components/WalletButton'
@@ -57,7 +57,8 @@ function Shell({ chogs }: { chogs: Chog[] }) {
     setWelcome(false)
     if (to) { location.hash = to }
   }
-  const [net, setNet] = useState<Net>(() => (new URLSearchParams(location.search).get('net') as Net | null) ?? defaultNet(targets))
+  const [net, setNetState] = useState<Net>(() => defaultNet(targets))
+  const setNet = (n: Net) => { rememberNet(n); setNetState(n) }
 
   // lets tests render and measure the sound without a speaker
   useEffect(() => {

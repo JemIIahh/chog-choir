@@ -12,3 +12,8 @@ qa/*.png
 .DS_Store
 *.log
 contracts/lib
+
+qa/.anvil.*
+qa/.vite.*
+qa/hum.wav
+qa/shots/

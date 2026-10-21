@@ -5,8 +5,9 @@ interface IChogOwner {
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
-interface IERC20Like {
+interface IERC20Burnable {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function burn(uint256 amount) external;
 }
 
 /// @title Chog Choir
@@ -16,15 +17,14 @@ interface IERC20Like {
 /// @dev    The NFT is a constructor argument. On Monad mainnet it is the real Chog Genesis
 ///         collection; on testnet it is `ChogReplica`. Nothing else in here knows the difference.
 ///         A Chog that has already sung can take an encore: burn `encorePrice` of $CHOG for a second note.
+///         The burn is a real `burn()`, so the token's total supply goes down by exactly what the choir burned.
 contract ChogChoir {
     uint8 public constant STEPS = 16;
     uint8 public constant PITCHES = 12;
     uint8 public constant MODES = 5;
 
-    address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
-
     IChogOwner public immutable chog;
-    IERC20Like public immutable chogToken; // address(0) turns encores off
+    IERC20Burnable public immutable chogToken; // address(0) turns encores off
     uint256 public immutable encorePrice;
     uint64 public immutable epochSeconds;
     uint64 public immutable startTime;
@@ -40,6 +40,7 @@ contract ChogChoir {
     mapping(uint256 epoch => mapping(uint16 tokenId => bool)) public encored;
     uint256 public voices; // every note ever placed, encores included
     uint32 public singers; // distinct Chogs that have sung at least once
+    uint256 public totalBurned; // $CHOG burned by encores, in the token's smallest unit
 
     /// notes are packed as tokenId << 16 | step << 8 | pitch
     mapping(uint256 epoch => uint32[]) private _notes;
@@ -62,24 +63,41 @@ contract ChogChoir {
     error SingFirst();
     error AlreadyEncored();
     error BurnFailed();
+    error BadBatch();
+    error NotAContract();
 
     constructor(address chog_, uint64 epochSeconds_, address token_, uint256 encorePrice_) {
-        require(chog_ != address(0) && epochSeconds_ > 0, "bad args");
+        require(epochSeconds_ > 0, "bad args");
         require(token_ == address(0) || encorePrice_ > 0, "free encore");
+        if (chog_.code.length == 0 || (token_ != address(0) && token_.code.length == 0)) revert NotAContract();
         chog = IChogOwner(chog_);
-        chogToken = IERC20Like(token_);
+        chogToken = IERC20Burnable(token_);
         encorePrice = encorePrice_;
         epochSeconds = epochSeconds_;
-        startTime = uint64(block.timestamp);
+        // rounds start on multiples of their length (a one-day round turns over at 00:00 UTC), so "ends in 3:12:00" reads naturally.
+        // The first round is simply shorter than the rest.
+        startTime = uint64(block.timestamp - (block.timestamp % epochSeconds_));
     }
 
     // ───────────────────────────── singing ─────────────────────────────
 
     /// @notice Add this Chog's one note to the current loop.
     function place(uint16 tokenId, uint8 step, uint8 pitch) external {
+        _place(currentEpoch(), tokenId, step, pitch);
+    }
+
+    /// @notice Add one note for each of several Chogs in a single transaction. All or nothing: if any Chog is not yours
+    ///         or has already sung this round, the whole batch reverts.
+    function placeMany(uint16[] calldata ids, uint8[] calldata steps, uint8[] calldata pitches) external {
+        uint256 n = ids.length;
+        if (n == 0 || n != steps.length || n != pitches.length) revert BadBatch();
+        uint256 epoch = currentEpoch();
+        for (uint256 i = 0; i < n; i++) _place(epoch, ids[i], steps[i], pitches[i]);
+    }
+
+    function _place(uint256 epoch, uint16 tokenId, uint8 step, uint8 pitch) internal {
         if (step >= STEPS || pitch >= PITCHES) revert OutOfRange();
         if (chog.ownerOf(tokenId) != msg.sender) revert NotYourChog();
-        uint256 epoch = currentEpoch();
         if (hasSung[epoch][tokenId]) revert AlreadySang();
 
         hasSung[epoch][tokenId] = true;
@@ -108,7 +126,10 @@ contract ChogChoir {
         encored[epoch][tokenId] = true;
         _notes[epoch].push(pack(tokenId, step, pitch));
         voices++;
-        if (!chogToken.transferFrom(msg.sender, DEAD, encorePrice)) revert BurnFailed();
+        totalBurned += encorePrice;
+        // pull the tokens in, then burn them: the token's total supply drops by exactly `encorePrice`
+        if (!chogToken.transferFrom(msg.sender, address(this), encorePrice)) revert BurnFailed();
+        chogToken.burn(encorePrice);
         emit Encore(epoch, tokenId, msg.sender, step, pitch, encorePrice);
     }
 

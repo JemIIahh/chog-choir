@@ -1,4 +1,4 @@
-import { BaseError, ContractFunctionRevertedError, createPublicClient, http, type Address, type PublicClient } from 'viem'
+import { BaseError, ContractFunctionRevertedError, createPublicClient, fallback, http, type Address, type PublicClient } from 'viem'
 import type { Note } from '../lib/share'
 import { choirAbi, nftAbi, tokenAbi } from './abi'
 import type { Deployment, Target } from './config'
@@ -6,8 +6,11 @@ import type { Session } from './wallet'
 
 export type Reader = { pub: PublicClient; target: Target }
 
+/** Reads go to the first public RPC and fall over to the others if it rate-limits or goes down. */
 export function makeReader(target: Target): Reader {
-  return { pub: createPublicClient({ chain: target.chain, transport: http(), batch: { multicall: true } }), target }
+  const urls = target.chain.rpcUrls.default.http
+  const transport = urls.length > 1 ? fallback(urls.map(u => http(u, { retryCount: 1, timeout: 12_000 })), { retryCount: 1 }) : http()
+  return { pub: createPublicClient({ chain: target.chain, transport, batch: { multicall: true } }), target }
 }
 
 export const unpack = (n: number): Note => ({ id: (n >>> 16) & 0xffff, step: (n >>> 8) & 255, pitch: n & 255 })
@@ -100,16 +103,20 @@ export type LoftStat = { total: number; last: number; streak: number; best: numb
 
 /** Every Chog's record in one call. Index 0 is token id 1. */
 export async function readLoft(r: Reader, d: Deployment, supply = 1969): Promise<LoftStat[]> {
-  const rows = await r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'loft', args: [1n, BigInt(supply)] })
-  return rows.map(x => ({ total: x.total, last: x.lastPlusOne, streak: x.streak, best: x.best }))
+  // in chunks: a single call over every seat costs a lot of gas on Monad and some public RPCs cap eth_call
+  const CHUNK = 400
+  const starts = Array.from({ length: Math.ceil(supply / CHUNK) }, (_, i) => 1 + i * CHUNK)
+  const parts = await Promise.all(starts.map(from => r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'loft', args: [BigInt(from), BigInt(Math.min(CHUNK, supply - (from - 1)))] })))
+  return parts.flat().map(x => ({ total: x.total, last: x.lastPlusOne, streak: x.streak, best: x.best }))
 }
 
-export async function readCollective(r: Reader, d: Deployment): Promise<{ voices: number; singers: number }> {
-  const [voices, singers] = await Promise.all([
+export async function readCollective(r: Reader, d: Deployment): Promise<{ voices: number; singers: number; burned: bigint }> {
+  const [voices, singers, burned] = await Promise.all([
     r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'voices' }),
     r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'singers' }),
+    r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'totalBurned' }),
   ])
-  return { voices: Number(voices), singers: Number(singers) }
+  return { voices: Number(voices), singers: Number(singers), burned }
 }
 
 /** The price lives in the contract; the UI never trusts a config file for it. */
@@ -148,15 +155,16 @@ const REVERTS: Record<string, string> = {
   EpochNotOver: 'This round is still being sung.',
   AlreadySealed: 'Someone already sealed this round.',
   Silent: 'Nobody sang in that round, so there is nothing to seal.',
+  BadBatch: 'That batch of notes was not valid.',
 }
 
-export function explain(e: unknown): string {
+export function explain(e: unknown, opts: { testnet?: boolean } = {}): string {
   if (e instanceof BaseError) {
     const rev = e.walk(x => x instanceof ContractFunctionRevertedError)
     if (rev instanceof ContractFunctionRevertedError && rev.data?.errorName && REVERTS[rev.data.errorName]) return REVERTS[rev.data.errorName]
     const code = (e.walk(x => typeof (x as { code?: unknown }).code === 'number') as { code?: number } | null)?.code
     if (code === 4001) return 'Cancelled in your wallet.'
-    if (/insufficient funds/i.test(e.shortMessage)) return 'Not enough MON for gas. Get testnet MON from a faucet and try again.'
+    if (/insufficient funds/i.test(e.shortMessage)) return opts.testnet ? 'Not enough MON for gas. Get testnet MON from a faucet and try again.' : 'Not enough MON in this wallet to pay for gas.'
     if (/already minted|ERC721InvalidSender|ERC721InvalidReceiver/i.test(e.message)) return 'Someone already claimed that Chog. Pick another.'
     return e.shortMessage
   }
@@ -179,14 +187,19 @@ export const claimChog = (r: Reader, s: Session, d: Deployment, id: number) =>
 export const placeNote = (r: Reader, s: Session, d: Deployment, id: number, step: number, pitch: number) =>
   send(r, s, { address: d.choir, abi: choirAbi, functionName: 'place', args: [id, step, pitch] })
 
+/** Several Chogs sing in one transaction. All or nothing, so the caller passes only Chogs that have not sung this round. */
+export const placeMany = (r: Reader, s: Session, d: Deployment, notes: { id: number; step: number; pitch: number }[]) =>
+  send(r, s, { address: d.choir, abi: choirAbi, functionName: 'placeMany', args: [notes.map(n => n.id), notes.map(n => n.step), notes.map(n => n.pitch)] })
+
 export const sealRound = (r: Reader, s: Session, d: Deployment, epoch: number) =>
   send(r, s, { address: d.choir, abi: choirAbi, functionName: 'seal', args: [BigInt(epoch)] })
 
 export const encoreNote = (r: Reader, s: Session, d: Deployment, id: number, step: number, pitch: number) =>
   send(r, s, { address: d.choir, abi: choirAbi, functionName: 'encore', args: [id, step, pitch] })
 
-export const approveToken = (r: Reader, s: Session, d: Deployment) =>
-  send(r, s, { address: d.token, abi: tokenAbi, functionName: 'approve', args: [d.choir, 2n ** 256n - 1n] })
+/** Approves exactly one encore's worth, so the wallet shows a spending cap equal to the price and nothing more. */
+export const approveToken = (r: Reader, s: Session, d: Deployment, amount: bigint) =>
+  send(r, s, { address: d.token, abi: tokenAbi, functionName: 'approve', args: [d.choir, amount] })
 
 export const tokenFaucet = (r: Reader, s: Session, d: Deployment) =>
   send(r, s, { address: d.token, abi: tokenAbi, functionName: 'faucet', args: [] })

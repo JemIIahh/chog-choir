@@ -427,3 +427,32 @@ input[type='range']:focus-visible { outline-offset: 6px; }
   .wmodal { padding: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { .wmodal-back, .wmodal, .wmenu, .wskel, .spin { animation: none; } }
+
+/* ───────────── what if more Chogs sing: the preview slider, and the burn counter ───────────── */
+.fill { display: grid; gap: 6px; margin: 12px 0 2px; padding: 12px 14px; border-radius: var(--r, 16px); background: var(--paper-2); }
+.fill-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; }
+.fill-top output { color: var(--ink-soft); font-size: 13px; }
+.fill.on { outline: 2px dashed var(--sun); outline-offset: 2px; }
+.fill.on .fill-top output { color: var(--ink); font-weight: 600; }
+.fill input[type='range'] { width: 100%; }
+.fill .btn { justify-self: start; }
+.c-nums .burned { color: var(--ink); font-weight: 600; }
+
+/* ───────────── hum a tune ───────────── */
+.hum { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 8px 6px 16px; border-radius: 99px; border: 2px solid var(--sun); background: var(--paper-2); }
+.hum-say { font-weight: 700; font-size: 14px; }
+.hum-dots { display: inline-flex; gap: 4px; }
+.hum-dots i { width: 10px; height: 10px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 16%, transparent); transition: background 0.15s, transform 0.15s; }
+.hum-dots i.on { background: var(--accent); transform: scale(1.25); }
+.hum-dots i.off { background: color-mix(in srgb, var(--ink) 30%, transparent); }
+.duet-with { display: flex; align-items: center; gap: 8px; margin: -6px 0 14px; font-size: 14px; color: var(--ink-soft); flex-wrap: wrap; }
+.duet-with img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.hero-note { margin: 4px 0 10px; font-size: 14px; color: var(--ink-soft); }
+
+.hum-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.hum-btn { display: inline-flex; align-items: center; gap: 8px; }
+.hum-hint { color: var(--ink-soft); font-size: 14px; }
+.finder.duet .finder-in { height: 40px; padding: 0 14px; font-size: 14px; }
+.finder.duet .finder-in input { width: 64px; font-size: 17px; }
+.finder.duet .btn { height: 40px; }
+@media (max-width: 760px) { .hum-row { justify-content: center; } }

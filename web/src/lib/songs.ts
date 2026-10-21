@@ -2,7 +2,7 @@ import { BEATS } from '../audio/band'
 import { hash, VOWELS, phraseFor } from '../audio/voice'
 import type { Chog } from '../data/chogs'
 import { keyName, MODES, PITCHES } from './music'
-import type { Note, Song } from './share'
+import { MAX_NOTES, type Note, type Song } from './share'
 
 // Every Chog has a song: its own key, scale, tempo, band and hook, all read from its real traits.
 
@@ -87,3 +87,13 @@ export function songFor(c: Chog): SongInfo {
 }
 
 export const modeName = (m: number) => MODES[m].name.toLowerCase()
+
+/**
+ * Two Chogs sing together: the first Chog's song, plus the second one's hook. Both live on the first Chog's key and scale,
+ * so the two phrases always fit, whatever the pair.
+ */
+export function duetSong(host: Song, guest: Chog): Song {
+  const taken = new Set(host.notes.map(n => n.step * PITCHES + n.pitch))
+  const theirs = songFor(guest).song.notes.filter(n => !taken.has(n.step * PITCHES + n.pitch))
+  return { ...host, notes: [...host.notes, ...theirs].slice(0, MAX_NOTES) }
+}

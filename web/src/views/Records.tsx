@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '../audio/usePlayer'
 import { explain, makeReader, readRound, readSealed, readWaiting, sealRound, type Sealed, type Waiting } from '../chain/client'
 import type { Net, Target } from '../chain/config'
@@ -34,6 +34,9 @@ function Archive({ byId, player, target, d, targets, net, setNet }: RecordsProps
   const [pickedEpoch, setPickedEpoch] = useState<number | null>(null)
   const [controls, setControls] = useState({ tempo: 84, space: 55, bright: 55, beat: 1 })
   const [busy, setBusy] = useState<number | null>(null)
+  const [album, setAlbum] = useState(false) // playing every sealed round in turn
+  const albumStart = useRef(false)
+  const loopsHeard = useRef(0)
 
   const load = useCallback(async () => {
     try {
@@ -69,7 +72,35 @@ function Archive({ byId, player, target, d, targets, net, setNet }: RecordsProps
     }
   }, [wallet.session, reader, d, load, flash])
 
-  const choose = (e: number) => { player.stop(); setPickedEpoch(e) }
+  const choose = (e: number) => { setAlbum(false); player.stop(); setPickedEpoch(e) }
+
+  // the archive as a record: oldest round first, each sung twice, then the next
+  const LOOPS_PER_ROUND = 2
+  const order = useMemo(() => (sealed ? [...sealed].reverse().map(s => s.epoch) : []), [sealed])
+  const pickedNow = useRef<number | null>(null)
+  pickedNow.current = picked?.epoch ?? null
+  const playAll = () => {
+    if (order.length === 0) return
+    player.stop()
+    loopsHeard.current = 0
+    albumStart.current = true
+    setPickedEpoch(order[0])
+    setAlbum(true)
+  }
+  useEffect(() => {
+    // runs after the new round has been handed to the player, so the album starts on its first round
+    if (album && albumStart.current) { albumStart.current = false; void player.toggle() }
+  }, [album, picked?.epoch, player])
+  useEffect(() => player.onStep(ev => {
+    if (!album || ev.step !== 15) return
+    loopsHeard.current++
+    if (loopsHeard.current < LOOPS_PER_ROUND) return
+    loopsHeard.current = 0
+    const i = order.indexOf(pickedNow.current ?? -1)
+    if (i >= 0 && i + 1 < order.length) setPickedEpoch(order[i + 1])
+    else { setAlbum(false); player.stop() }
+  }), [album, order, player])
+  const albumAt = album && picked ? order.indexOf(picked.epoch) + 1 : 0
 
   return (
     <>
@@ -80,7 +111,7 @@ function Archive({ byId, player, target, d, targets, net, setNet }: RecordsProps
               <h1>{picked ? `Round ${picked.epoch + 1}` : 'Records'}</h1>
               <p className="sub">
                 {picked
-                  ? `${keyName(key.root, key.mode)} · ${picked.notes.length} ${picked.notes.length === 1 ? 'voice' : 'voices'} · sealed by ${short(picked.by)}`
+                  ? `${keyName(key.root, key.mode)} · ${picked.notes.length} ${picked.notes.length === 1 ? 'voice' : 'voices'} · sealed by ${short(picked.by)}${albumAt ? ` · playing ${albumAt} of ${order.length}` : ''}`
                   : sealed === null ? 'Reading the chain…' : 'Nothing sealed yet.'}
               </p>
             </div>
@@ -93,7 +124,9 @@ function Archive({ byId, player, target, d, targets, net, setNet }: RecordsProps
               <div className="empty-note"><span>No round is sealed yet.</span></div>
             )}
           </div>
-          <Dock song={song} playing={player.playing} onToggle={player.toggle} onChange={p => setControls(c => ({ ...c, ...p }))} keyLocked />
+          <Dock song={song} playing={player.playing} onToggle={() => { setAlbum(false); void player.toggle() }} onChange={p => setControls(c => ({ ...c, ...p }))} keyLocked>
+            {order.length >= 2 && <button className="btn dark" onClick={playAll}>{album && player.playing ? `Playing all ${order.length}` : `Play all ${order.length} rounds`}</button>}
+          </Dock>
           {picked && <p className="fine">Fingerprint {picked.hash.slice(0, 18)}… Anyone can check it: it is the hash of every note in this round, as the contract stored them.</p>}
         </section>
 
