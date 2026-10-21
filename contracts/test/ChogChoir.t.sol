@@ -142,6 +142,18 @@ contract ChogChoirTest is Test {
         assertEq(uint8(p), pitch);
     }
 
+    function test_replicaMetadataMatchesRealCollection() public {
+        // values read from the real contract on Monad mainnet: tokenURI(1) -> 1462, (2) -> 1463, (1968) -> 1460, (1969) -> 1461
+        assertEq(nft.tokenURI(1), "ipfs://base/1462.json");
+        assertEq(nft.tokenURI(2), "ipfs://base/1463.json");
+        vm.prank(alice);
+        nft.claim(1968);
+        vm.prank(alice);
+        nft.claim(1969);
+        assertEq(nft.tokenURI(1968), "ipfs://base/1460.json");
+        assertEq(nft.tokenURI(1969), "ipfs://base/1461.json");
+    }
+
     function test_replicaClaimBounds() public {
         vm.expectRevert(ChogReplica.BadId.selector);
         nft.claim(0);

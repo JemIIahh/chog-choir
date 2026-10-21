@@ -34,6 +34,7 @@ export const Staff = memo(
 
     useImperativeHandle(ref, () => ({
       hit(step, delay) {
+        const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         window.setTimeout(() => {
           const root = rootRef.current
           const col = colRef.current
@@ -42,6 +43,7 @@ export const Staff = memo(
           col.style.transform = `translateX(${step * 100}%)`
           let shown = 0
           root.querySelectorAll<HTMLElement>(`.note[data-step="${step}"]`).forEach(el => {
+            if (calm) return // the highlighted column already shows who is singing
             el.animate(
               [{ transform: 'scale(1)' }, { transform: 'scale(1.3) rotate(-5deg)', offset: 0.28 }, { transform: 'scale(1)' }],
               { duration: 420, easing: 'cubic-bezier(.2,.8,.3,1)' },
@@ -64,10 +66,15 @@ export const Staff = memo(
       },
     }))
 
-    const noteAt = useMemo(() => {
+    const { noteAt, stacked } = useMemo(() => {
       const m = new Map<number, Note>()
-      for (const n of song.notes) m.set(n.step * PITCHES + n.pitch, n)
-      return m
+      const c = new Map<number, number>()
+      for (const n of song.notes) {
+        const k = n.step * PITCHES + n.pitch
+        m.set(k, n)
+        c.set(k, (c.get(k) ?? 0) + 1)
+      }
+      return { noteAt: m, stacked: c }
     }, [song.notes])
 
     const rootRows = MODES[song.mode].intervals.length
@@ -101,6 +108,7 @@ export const Staff = memo(
                   {note && chog ? (
                     <span className="slot">
                       <img className={`note v${chog.spec.vowel}`} data-step={s} data-vowel={chog.spec.vowel} src={thumb(chog.n)} alt="" draggable={false} />
+                      {(stacked.get(s * PITCHES + p) ?? 1) > 1 && <span className="stack" title="More Chogs sing this same note">+{(stacked.get(s * PITCHES + p) ?? 1) - 1}</span>}
                     </span>
                   ) : pend ? (
                     <span className="slot">

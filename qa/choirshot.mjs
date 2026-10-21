@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'
+const [NFT, CHOIR, out] = process.argv.slice(2)
+const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] }); const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
+await p.goto(`http://127.0.0.1:5188/?chain=31337&rpc=http://127.0.0.1:8545&choir=${CHOIR}&nft=${NFT}&epoch=3600#choir`, { waitUntil: 'networkidle' })
+await p.waitForFunction(() => /voices/.test(document.querySelector('.stage .sub')?.textContent ?? ''))
+await p.waitForTimeout(800)
+console.log(await p.textContent('.stage .sub'))
+await p.click('.play'); await p.waitForTimeout(1600)
+await p.screenshot({ path: out })
+await b.close()

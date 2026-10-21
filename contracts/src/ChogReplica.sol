@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @title Chog Genesis (testnet replica)
 /// @notice Same ids, same metadata as the real collection on Monad mainnet, but free to claim, so
@@ -22,7 +23,9 @@ contract ChogReplica is ERC721 {
         _mint(msg.sender, id);
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return _base;
+    /// @notice The real collection's metadata is a rotation of the ids: token 1 is "CHOG #1462". Same here.
+    function tokenURI(uint256 id) public view override returns (string memory) {
+        _requireOwned(id);
+        return string.concat(_base, Strings.toString(((id + 1460) % SUPPLY) + 1), ".json");
     }
 }

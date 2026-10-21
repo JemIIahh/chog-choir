@@ -1,0 +1,11 @@
+import { chromium } from 'playwright'
+const [NFT, CHOIR] = process.argv.slice(2)
+const b = await chromium.launch(); const ctx = await b.newContext()
+await ctx.addInitScript(() => { window.addEventListener('eip6963:requestProvider', () => {}) })
+const p = await ctx.newPage()
+p.on('console', m => { if (m.type() === 'error') console.log('console error', m.text().slice(0, 300)) })
+p.on('pageerror', e => console.log('pageerror', e.message))
+await p.goto(`http://127.0.0.1:5188/?chain=31337&rpc=http://127.0.0.1:8545&choir=${CHOIR}&nft=${NFT}&epoch=3600#choir`, { waitUntil: 'networkidle' })
+await p.waitForTimeout(3000)
+console.log('H1:', JSON.stringify(await p.textContent('.stage h1')), 'SUB:', await p.textContent('.stage .sub'))
+await b.close()

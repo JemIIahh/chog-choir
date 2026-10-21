@@ -171,6 +171,8 @@ input[type='range']:focus-visible { outline-offset: 6px; }
   .keypick, .dock-actions { grid-column: auto / span 2; }
 }
 @media (max-width: 640px) {
+  .staff { min-width: 620px; --cell-h: 36px; }
+  .note { width: min(calc(100% - 4px), 30px); border-width: 2px; }
   .app { padding: 14px 14px 40px; }
   .top { flex-direction: column; gap: 4px; }
   .stage { padding: 16px 14px; border-radius: 24px; }
@@ -186,3 +188,57 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ───────────── nav ───────────── */
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.14); }
+.tabs a { padding: 8px 18px; border-radius: 99px; color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
+.tabs a:hover { background: rgba(255, 255, 255, 0.14); }
+.tabs a.on { background: #fff; color: var(--ink); }
+.soon { color: #fff; padding: 40px 4px; }
+.top { align-items: center; }
+.tag { display: none; }
+
+.stack { position: absolute; right: 1px; bottom: 2px; z-index: 4; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+
+/* ───────────── wallet ───────────── */
+.wallet { display: grid; gap: 10px; }
+.wallet.on { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.w-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--v2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--v2) 25%, transparent); }
+.w-id { font-weight: 800; }
+.w-net { color: var(--ink-soft); font-size: 13px; margin-right: auto; }
+.w-why { margin: 0; color: var(--ink-soft); }
+.w-note { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.w-list { display: grid; gap: 8px; }
+.w-list .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.w-err { margin: 0; padding: 10px 12px; border-radius: 12px; background: #ffe7e3; color: #8a1d0f; font-size: 14px; font-weight: 600; }
+.btn.small { height: 30px; padding: 0 12px; font-size: 13px; }
+
+/* ───────────── the choir ───────────── */
+.fine { margin: 12px 4px 0; color: var(--ink-soft); font-size: 13px; }
+.empty-note { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: grid; gap: 2px; text-align: center; font-family: var(--display); font-size: 26px; line-height: 1.15; color: var(--ink); -webkit-text-stroke: 6px #fff; paint-order: stroke fill; pointer-events: none; z-index: 8; }
+.voicecard.sing { display: grid; gap: 14px; }
+.voicecard.sing h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 24px; }
+.voicecard.sing h3 { margin: 0 0 8px; font-size: 14px; font-weight: 800; }
+.rule { margin: -6px 0 0; color: var(--ink-soft); font-size: 14px; }
+.mine { display: grid; gap: 8px; }
+.thumbs.row { max-height: 160px; margin-top: 0; }
+.thumb.done { opacity: 0.45; }
+.act { display: grid; gap: 8px; }
+.btn.big { height: 48px; font-size: 16px; }
+.txlink { font-size: 13px; font-weight: 700; color: var(--ink); }
+
+/* ───────────── records ───────────── */
+.side-h { margin: 0 0 10px; font-family: var(--display); font-weight: 400; font-size: 24px; }
+.rounds { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rounds > li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rounds b { display: block; }
+.rounds small { display: block; color: var(--ink-soft); font-size: 13px; font-weight: 500; }
+.round { width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border: 2px solid var(--line); border-radius: 18px; background: #fff; text-align: left; }
+.round:hover { border-color: var(--ink-soft); }
+.round.sel { border-color: var(--ink); }
+.faces { display: flex; }
+.faces img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; margin-left: -10px; background: var(--paper-2); }
+.faces img:first-child { margin-left: 0; }
+.r-t { display: grid; }
+
+.w-err a { color: inherit; font-weight: 800; }

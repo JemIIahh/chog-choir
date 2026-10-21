@@ -19,6 +19,8 @@ export class ChoirEngine {
   private nextStep = 0
   private nextTime = 0
   playing = false
+  /** audio-clock time at which step 0 of the current run sounds */
+  t0 = 0
   onStep: ((e: StepEvent) => void) | null = null
 
   constructor(song: Song, specOf: SpecOf) {
@@ -49,6 +51,7 @@ export class ChoirEngine {
     this.playing = true
     if (fromStart) this.nextStep = 0
     this.nextTime = this.ctx.currentTime + 0.06
+    if (fromStart) this.t0 = this.nextTime
     this.timer = window.setInterval(() => this.tick(), TICK_MS)
     this.tick()
   }
