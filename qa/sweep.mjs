@@ -1,5 +1,6 @@
 import { chromium } from 'playwright'
 const b = await chromium.launch(); const p = await b.newPage()
+await p.addInitScript(() => localStorage.setItem('chogchoir:welcome-seen', '1')) // the welcome would hide the page
 await p.goto('http://127.0.0.1:5188/', { waitUntil: 'networkidle' }); await p.waitForSelector('.hero')
 const N = 200
 const res = await p.evaluate(async N => {

@@ -166,6 +166,7 @@ export function explain(e: unknown): string {
 async function send(r: Reader, s: Session, call: { address: Address; abi: typeof choirAbi | typeof nftAbi | typeof tokenAbi; functionName: string; args: unknown[] }) {
   // simulate first so a revert shows its reason instead of a vague wallet error
   const { request } = await r.pub.simulateContract({ ...(call as object), account: s.account } as never)
+  await s.ensure() // the wallet may still be on another network
   const hash = await s.client.writeContract(request as never)
   const receipt = await r.pub.waitForTransactionReceipt({ hash })
   if (receipt.status !== 'success') throw new Error('The transaction was reverted.')

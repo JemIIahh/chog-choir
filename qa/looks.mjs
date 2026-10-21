@@ -1,9 +1,9 @@
 // Screenshots of every view at desktop and phone width, with the song playing so the backdrop is painted.
-// usage: node looks.mjs <outDir> [look] [url]
+// usage: node looks.mjs <outDir> [dark|light] [url]
 import { chromium } from 'playwright'
 const out = process.argv[2]
-const look = process.argv[3] ?? 'stage'
-const url = (process.argv[4] ?? 'http://127.0.0.1:5188/') + `?look=${look}`
+const look = process.argv[3] ?? 'dark'
+const url = (process.argv[4] ?? 'http://127.0.0.1:5188/') + `?theme=${look}`
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
 const views = [
   ['welcome', '', true],

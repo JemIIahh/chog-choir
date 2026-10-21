@@ -1,5 +1,5 @@
 :root {
-  /* Tokens. Each look (src/looks/*.css) redefines these; the values here are the default look, Stage. */
+  /* Tokens. These are the dark mode; light mode (src/themes/light.css) redefines them under html[data-theme='light']. */
   --desk: #15110f;
   --paper: #211b18; /* panels */
   --paper-2: #2c2420;
@@ -37,6 +37,7 @@
 
 * { box-sizing: border-box; }
 html { color-scheme: dark; }
+html[data-theme='light'] { color-scheme: light; }
 body {
   margin: 0;
   background: var(--desk);
@@ -55,7 +56,7 @@ img { display: block; }
 
 /* ───────────── page ───────────── */
 .app { max-width: 1440px; margin: 0 auto; padding: 18px 28px 48px; }
-.top { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding: 4px 4px 18px; color: var(--ink); }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 24px; padding: 4px 4px 18px; color: var(--ink); }
 .mark { font-family: var(--display); font-size: 32px; line-height: 1; color: var(--ink); text-decoration: none; letter-spacing: 0.01em; }
 .tag { margin: 0; font-size: 15px; color: var(--ink-soft); }
 
@@ -309,8 +310,12 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 @media (max-width: 640px) { .tabs a { padding: 8px 12px; font-size: 13px; } .mark { font-size: 28px; } }
 
 /* ───────────── welcome ───────────── */
-.how { margin-left: auto; margin-right: 14px; border: 0; background: transparent; color: var(--ink-soft); font-weight: 700; font-size: 14px; padding: 8px 10px; border-radius: 99px; text-decoration: underline; text-underline-offset: 4px; }
+.top-tools { display: flex; align-items: center; gap: 6px; }
+.how { border: 0; background: transparent; color: var(--ink-soft); font-weight: 700; font-size: 14px; padding: 8px 10px; border-radius: 99px; text-decoration: underline; text-underline-offset: 4px; }
 .how:hover { color: var(--ink); }
+.mode { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1.5px solid var(--edge); background: transparent; color: var(--ink); transition: background 0.12s, transform 0.12s; }
+.mode:hover { background: color-mix(in srgb, var(--ink) 9%, transparent); }
+.mode:active { transform: scale(0.94); }
 .onb { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: var(--desk); overflow-y: auto; }
 .onb-card { position: relative; width: min(980px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; background: var(--paper); border-radius: 36px; padding: 40px 44px 24px; box-shadow: 0 40px 80px -30px rgba(28, 30, 43, 0.8); outline: none; display: grid; gap: 24px; }
 .onb-skip { position: absolute; top: 18px; right: 22px; border: 0; background: transparent; color: var(--ink-soft); font-weight: 700; padding: 8px 10px; border-radius: 99px; text-decoration: underline; text-underline-offset: 4px; }
@@ -350,6 +355,16 @@ input[type='range']:focus-visible { outline-offset: 6px; }
   .onb-face .hero-face { width: 180px; height: 180px; }
   .onb-text h1, .onb-wide h1 { font-size: 34px; }
   .onb-text p, .onb-wide p { font-size: 16px; }
-  .how { margin: 0; }
+  .top-tools { justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .onb-body { animation: none; } }
+
+/* ───────────── the wallet button and its menu ───────────── */
+.top { position: relative; }
+.wallet-wrap { position: relative; }
+.holder .w-list { display: flex; flex-wrap: wrap; }
+.wbtn { display: inline-flex; align-items: center; gap: 8px; }
+.wmenu { position: absolute; right: 0; top: calc(100% + 10px); z-index: 60; width: min(320px, 88vw); display: grid; gap: 10px; padding: 16px; border-radius: 20px; background: var(--white); border: 1px solid var(--edge); box-shadow: 0 26px 50px -20px rgba(0, 0, 0, 0.55); }
+.wmenu h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 20px; }
+.wmenu p { margin: 0; }
+@media (max-width: 640px) { .wallet-wrap { position: static; } .wmenu { left: 0; right: 0; top: calc(100% + 6px); width: auto; } }

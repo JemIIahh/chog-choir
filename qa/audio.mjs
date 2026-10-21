@@ -26,6 +26,7 @@ const stats = x => { let pk = 0, sum = 0, clip = 0; for (const v of x) { const a
 
 const browser = await chromium.launch()
 const page = await browser.newPage()
+await page.addInitScript(() => localStorage.setItem('chogchoir:welcome-seen', '1')) // the welcome would hide the page
 page.on('pageerror', e => console.log('pageerror', e.message))
 await page.goto('http://127.0.0.1:5188/', { waitUntil: 'networkidle' })
 await page.waitForSelector('.staff')

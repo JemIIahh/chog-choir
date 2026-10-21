@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { Player } from '../audio/usePlayer'
 import type { Chog } from '../data/chogs'
-import { token } from '../lib/look'
+import { token } from '../lib/theme'
 
-// The page paints while it plays: every note that sounds blooms in its vowel's colour. On a dark look the blooms add up
-// like stage light, on a light look they multiply like wet ink. The look says which (--paint-op). One canvas, behind everything.
+// The page paints while it plays: every note that sounds blooms in its vowel's colour. In dark mode the blooms add up
+// like stage light, in light mode they multiply like wet ink. The mode says which (--paint-op). One canvas, behind everything.
 
 const PAINT = ['255,90,71', '255,176,32', '37,207,148', '45,180,242', '155,107,255'] // ahh ehh eee ohh ooo
 
@@ -27,9 +27,9 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
     let raf = 0
     let last = 0
     let op: GlobalCompositeOperation = 'multiply'
-    const readLook = () => { op = (token('--paint-op') || 'multiply') as GlobalCompositeOperation }
-    readLook()
-    window.addEventListener('chogchoir:look', readLook)
+    const readMode = () => { op = (token('--paint-op') || 'multiply') as GlobalCompositeOperation }
+    readMode()
+    window.addEventListener('chogchoir:theme', readMode)
 
     const resize = () => {
       const dpr = Math.min(1.5, window.devicePixelRatio || 1)
@@ -97,7 +97,7 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
       }, delay)
     })
 
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); window.removeEventListener('chogchoir:look', readLook); off() }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); window.removeEventListener('chogchoir:theme', readMode); off() }
   }, [])
 
   return <canvas ref={ref} className="backdrop" aria-hidden style={{ width: '100vw', height: '100vh' }} />

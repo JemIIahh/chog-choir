@@ -1,13 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { initLook } from './lib/look'
+import { initTheme } from './lib/theme'
 import './styles.css'
 import './structure.css'
-import './looks/stage.css'
-import './looks/sorbet.css'
+import './themes/dark.css'
+import './themes/light.css'
 
-initLook()
+initTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

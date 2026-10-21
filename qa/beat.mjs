@@ -9,6 +9,7 @@ function bands(x, rate) {
 }
 const stats = x => { let pk = 0, s = 0, clip = 0; for (const v of x) { const a = Math.abs(v); if (a > pk) pk = a; s += v * v; if (a >= 0.999) clip++ } return { peak: +pk.toFixed(3), rmsDb: +(20 * Math.log10(Math.sqrt(s / x.length))).toFixed(1), clip } }
 const browser = await chromium.launch(); const page = await browser.newPage()
+await page.addInitScript(() => localStorage.setItem('chogchoir:welcome-seen', '1')) // the welcome would hide the page
 await page.goto('http://127.0.0.1:5188/', { waitUntil: 'networkidle' }); await page.waitForSelector('.staff')
 const names = ['no beat', 'lo-fi', 'pulse', 'halftime']; const ref = {}
 for (let beat = 0; beat < 4; beat++) {

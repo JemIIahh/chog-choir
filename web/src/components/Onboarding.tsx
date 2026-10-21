@@ -181,7 +181,7 @@ export function Onboarding({ chogs, byId, byN, player, onClose }: Props) {
                   <button className="btn" type="button" onClick={shuffle}>Shuffle</button>
                 </form>
                 {miss && <p className="w-err" role="alert">{miss}</p>}
-                <HolderPanel byId={byId} selectedN={chog.n} onPick={pickChog} />
+                <HolderPanel inline byId={byId} selectedN={chog.n} onPick={pickChog} />
               </div>
             </>
           )}

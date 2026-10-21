@@ -59,6 +59,7 @@ cd web && pnpm install && pnpm dev          # http://127.0.0.1:5188
 pnpm test                                    # 32 tests
 cd ../contracts && forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts@v5.1.0 --no-git && forge test
 cd ../qa && pnpm install && ./run-e2e.sh     # local chain + the whole flow in a real browser
+node onboarding.mjs; node theme.mjs; node wallet.mjs   # the welcome, dark/light mode, the wallet button
 ```
 
 `qa/audio.mjs`, `qa/beat.mjs` and `qa/sweep.mjs` render audio offline and measure it (formants, levels, balance, 200-song sweep).

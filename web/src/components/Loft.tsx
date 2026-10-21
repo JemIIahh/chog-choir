@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { VoiceType } from '../audio/voice'
 import type { LoftStat } from '../chain/client'
-import { token, useLook } from '../lib/look'
+import { token, useTheme } from '../lib/theme'
 import type { Chog } from '../data/chogs'
 
 const RING = ['#ff6b57', '#ffb02e', '#2fcf95', '#35b6f0', '#a47bff']
@@ -95,7 +95,7 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
   const wrap = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const [size, setSize] = useState({ w: 760, h: 270 })
-  const look = useLook()
+  const theme = useTheme()
   const [tip, setTip] = useState<{ x: number; y: number; c: Chog } | null>(null)
 
   useEffect(() => {
@@ -146,7 +146,7 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
     g.fillStyle = token('--ink-soft')
     g.textAlign = 'center'
     g.fillText('seated by voice, left to right: soprano, alto, tenor, bass', size.w / 2, size.h - 4)
-  }, [lay, stats, epoch, mine, selectedId, size, look])
+  }, [lay, stats, epoch, mine, selectedId, size, theme])
 
   const find = (e: React.PointerEvent | React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()

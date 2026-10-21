@@ -306,7 +306,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
                 {noGas && (
                   <p className="w-err" role="status">
                     This wallet has no {target.chain.nativeCurrency.symbol} for gas.
-                    {target.chain.id === 10143 && <> Get some from the <a href="https://faucet.monad.xyz" target="_blank" rel="noreferrer">Monad faucet</a>, then come back.</>}
+                    {target.chain.id === 10143 && <> Get some free from the <a href="https://faucet.monad.xyz" target="_blank" rel="noreferrer">Monad faucet</a> or the <a href="https://www.alchemy.com/faucets/monad-testnet" target="_blank" rel="noreferrer">Alchemy faucet</a> (no sign-up), then come back.</>}
                   </p>
                 )}
                 <div className="mine">

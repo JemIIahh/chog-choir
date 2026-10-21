@@ -6,7 +6,9 @@ import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
 import { defaultNet, resolveTargets, type Net } from './chain/config'
 import { Onboarding } from './components/Onboarding'
-import { LookSwitch } from './components/LookSwitch'
+import { ThemeToggle } from './components/ThemeToggle'
+import { WalletButton } from './components/WalletButton'
+import { WalletProvider } from './chain/WalletContext'
 import { PaintBackdrop } from './components/PaintBackdrop'
 import { Choir } from './views/Choir'
 import { Records } from './views/Records'
@@ -35,7 +37,7 @@ export default function App() {
 
   if (error) return <Splash text={`${error}. Reload to try again.`} />
   if (!chogs) return <Splash text="Gathering 1,969 Chogs…" />
-  return <Shell chogs={chogs} />
+  return <WalletProvider><Shell chogs={chogs} /></WalletProvider>
 }
 
 function Splash({ text }: { text: string }) {
@@ -87,19 +89,22 @@ function Shell({ chogs }: { chogs: Chog[] }) {
   return (
     <>
     <PaintBackdrop player={player} byId={byId} />
-    <LookSwitch />
     <div className={`app ${welcome ? 'hushed' : ''}`}>
       <header className={`top ${player.playing ? 'playing' : ''}`}>
         <a className="mark" href="#" onClick={go('songs')} aria-label="Chog Choir">
           {[...'Chog Choir'].map((ch, i) => <span key={i} aria-hidden style={{ ['--i' as string]: i } as React.CSSProperties}>{ch === ' ' ? '\u00a0' : ch}</span>)}
         </a>
-        <button className="how" onClick={() => setWelcome(true)} aria-label="How it works">How it works</button>
         <nav className="tabs" aria-label="Sections">
           <a href="#" className={view === 'songs' ? 'on' : ''} onClick={go('songs')} aria-current={view === 'songs' ? 'page' : undefined}>Songs</a>
           <a href="#studio" className={view === 'studio' ? 'on' : ''} onClick={go('studio')} aria-current={view === 'studio' ? 'page' : undefined}>Studio</a>
           <a href="#choir" className={view === 'choir' ? 'on' : ''} onClick={go('choir')} aria-current={view === 'choir' ? 'page' : undefined}>The Choir</a>
           <a href="#records" className={view === 'records' ? 'on' : ''} onClick={go('records')} aria-current={view === 'records' ? 'page' : undefined}>Records</a>
         </nav>
+        <div className="top-tools">
+          <button className="how" onClick={() => setWelcome(true)} aria-label="How it works">How it works</button>
+          <ThemeToggle />
+          <WalletButton />
+        </div>
       </header>
       {welcome && <Onboarding chogs={chogs} byId={byId} byN={byN} player={player} onClose={closeWelcome} />}
       {view === 'songs' && <Songs chogs={chogs} byId={byId} byN={byN} player={player} />}

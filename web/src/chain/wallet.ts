@@ -22,16 +22,12 @@ export function discoverWallets(waitMs = 350): Promise<Found[]> {
   })
 }
 
-export type Session = { account: Address; client: WalletClient; name: string }
+export type Session = { account: Address; client: WalletClient; name: string; /** switches the wallet to this chain; call right before sending a transaction */ ensure(): Promise<void> }
 
 const hex = (n: number) => `0x${n.toString(16)}`
 
-export async function connectWallet(w: Found, chain: Chain): Promise<Session> {
-  const accounts = (await w.provider.request({ method: 'eth_requestAccounts' })) as Address[]
-  const account = accounts[0]
-  if (!account) throw new Error('The wallet did not share an account.')
-  await ensureChain(w.provider, chain)
-  return { account, name: w.name, client: createWalletClient({ account, chain, transport: custom(w.provider) }) }
+export function makeSession(w: Found, account: Address, chain: Chain): Session {
+  return { account, name: w.name, client: createWalletClient({ account, chain, transport: custom(w.provider) }), ensure: () => ensureChain(w.provider, chain) }
 }
 
 export async function ensureChain(provider: EIP1193Provider, chain: Chain) {
@@ -60,4 +56,14 @@ export async function requestAccount(w: Found): Promise<Address> {
   const accounts = (await w.provider.request({ method: 'eth_requestAccounts' })) as Address[]
   if (!accounts[0]) throw new Error('The wallet did not share an account.')
   return accounts[0]
+}
+
+/** The account a wallet already shared with this site, if any. Never opens a prompt. */
+export async function sharedAccount(w: Found): Promise<Address | null> {
+  try {
+    const accounts = (await w.provider.request({ method: 'eth_accounts' })) as Address[]
+    return accounts[0] ?? null
+  } catch {
+    return null
+  }
 }
