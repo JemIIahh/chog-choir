@@ -5,12 +5,17 @@ import { usePlayer } from './audio/usePlayer'
 import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
 import { defaultNet, resolveTargets, type Net } from './chain/config'
+import { Onboarding } from './components/Onboarding'
 import { Choir } from './views/Choir'
 import { Records } from './views/Records'
 import { Songs } from './views/Songs'
 import { Studio } from './views/Studio'
 
 type View = 'songs' | 'studio' | 'choir' | 'records'
+const SEEN = 'chogchoir:welcome-seen'
+const seen = () => { try { return localStorage.getItem(SEEN) === '1' } catch { return false } }
+const markSeen = () => { try { localStorage.setItem(SEEN, '1') } catch { /* private mode: it will just show again */ } }
+
 const viewFromHash = (): View => {
   const h = location.hash
   if (h.startsWith('#choir')) return 'choir'
@@ -41,6 +46,13 @@ function Shell({ chogs }: { chogs: Chog[] }) {
   const player = usePlayer(byId)
   const [view, setView] = useState<View>(viewFromHash)
   const targets = useMemo(resolveTargets, [])
+  // first visit to the front door gets the welcome; links to a song, the studio or the choir go straight there
+  const [welcome, setWelcome] = useState(() => !seen() && location.hash === '')
+  const closeWelcome = (to?: string) => {
+    markSeen()
+    setWelcome(false)
+    if (to) { location.hash = to }
+  }
   const [net, setNet] = useState<Net>(() => (new URLSearchParams(location.search).get('net') as Net | null) ?? defaultNet(targets))
 
   // lets tests render and measure the sound without a speaker
@@ -74,6 +86,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
     <div className="app">
       <header className="top">
         <a className="mark" href="#" onClick={go('songs')}>Chog Choir</a>
+        <button className="how" onClick={() => setWelcome(true)} aria-label="How it works">How it works</button>
         <nav className="tabs" aria-label="Sections">
           <a href="#" className={view === 'songs' ? 'on' : ''} onClick={go('songs')} aria-current={view === 'songs' ? 'page' : undefined}>Songs</a>
           <a href="#studio" className={view === 'studio' ? 'on' : ''} onClick={go('studio')} aria-current={view === 'studio' ? 'page' : undefined}>Studio</a>
@@ -81,6 +94,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
           <a href="#records" className={view === 'records' ? 'on' : ''} onClick={go('records')} aria-current={view === 'records' ? 'page' : undefined}>Records</a>
         </nav>
       </header>
+      {welcome && <Onboarding chogs={chogs} byId={byId} byN={byN} player={player} onClose={closeWelcome} />}
       {view === 'songs' && <Songs chogs={chogs} byId={byId} byN={byN} player={player} />}
       {view === 'studio' && <Studio chogs={chogs} byId={byId} player={player} />}
       {view === 'choir' && <Choir chogs={chogs} byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}

@@ -8,9 +8,10 @@ import { keyName } from '../lib/music'
 import { encodeSong } from '../lib/share'
 import { songFor } from '../lib/songs'
 import { useClip } from '../lib/useClip'
+import { useFacePulse } from '../lib/useFacePulse'
 import { useToast } from '../lib/useToast'
+import { HolderPanel } from '../components/HolderPanel'
 
-const SOUND = ['ahh', 'ehh', 'eee', 'ohh', 'ooo']
 const fromHash = () => {
   const m = location.hash.match(/^#c=(\d+)/)
   return m ? Number(m[1]) : null
@@ -29,25 +30,11 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
   const chog = (n !== null ? byN.get(n) : null) ?? showcase
   const { song, lines } = useMemo(() => songFor(chog), [chog])
   const missing = n !== null && !byN.get(n)
+  useEffect(() => { setText(String(chog.n)) }, [chog.n])
 
   useEffect(() => { player.bind(song) }, [song, player])
 
-  // the face keeps time: a small pulse on every beat, a bigger one when it sings
-  useEffect(() => player.onStep(({ step, delay }) => {
-    window.setTimeout(() => {
-      const el = faceRef.current
-      if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-      const sings = song.notes.some(x => x.step === step)
-      el.animate([{ transform: 'scale(1)' }, { transform: `scale(${sings ? 1.09 : 1.025})` }, { transform: 'scale(1)' }], { duration: sings ? 380 : 240, easing: 'ease-out' })
-      if (sings) {
-        const b = document.createElement('span')
-        b.className = `bubble v${chog.spec.vowel} big`
-        b.textContent = SOUND[chog.spec.vowel]
-        el.appendChild(b)
-        b.animate([{ transform: 'translate(-50%, 0) scale(.6)', opacity: 0 }, { transform: 'translate(-50%, -14px) scale(1)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%, -34px) scale(1)', opacity: 0 }], { duration: 900, easing: 'ease-out', fill: 'forwards' }).onfinish = () => b.remove()
-      }
-    }, delay)
-  }), [player, song, chog])
+  useFacePulse(player, song, chog, faceRef)
 
   const open = useCallback(async (num: number) => {
     const c = byN.get(num)
@@ -101,6 +88,7 @@ export function Songs({ chogs, byId, byN, player }: { chogs: Chog[]; byId: Map<n
         <button className="btn" type="button" onClick={shuffle}>Shuffle</button>
       </form>
       {missing && <p className="w-err">There is no Chog #{n}. Numbers run from 1 to {chogs.length}.</p>}
+      <HolderPanel byId={byId} selectedN={chog.n} onPick={c => { setText(String(c.n)); void open(c.n) }} />
 
       <div className="hero">
         <div className={`hero-face v${chog.spec.vowel}`} ref={faceRef}>

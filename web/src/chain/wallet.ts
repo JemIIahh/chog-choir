@@ -54,3 +54,10 @@ export async function ensureChain(provider: EIP1193Provider, chain: Chain) {
     })
   }
 }
+
+/** Ask a wallet which account to use, without switching networks or signing anything. */
+export async function requestAccount(w: Found): Promise<Address> {
+  const accounts = (await w.provider.request({ method: 'eth_requestAccounts' })) as Address[]
+  if (!accounts[0]) throw new Error('The wallet did not share an account.')
+  return accounts[0]
+}

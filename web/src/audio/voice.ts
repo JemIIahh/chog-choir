@@ -92,7 +92,7 @@ function voiceTypeOf(body: string): VoiceType {
   return u < 0.3 ? 'bass' : u < 0.6 ? 'tenor' : u < 0.82 ? 'alto' : 'soprano'
 }
 
-const TYPE_SHAPE: Record<VoiceType, { size: number; low: number; high: number }> = {
+export const TYPE_SHAPE: Record<VoiceType, { size: number; low: number; high: number }> = {
   bass: { size: 0.86, low: 0, high: 5 },
   tenor: { size: 1.0, low: 2, high: 7 },
   alto: { size: 1.1, low: 4, high: 9 },

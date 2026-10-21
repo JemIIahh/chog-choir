@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { StaffHandle } from '../components/Staff'
 import type { Chog } from '../data/chogs'
 import { ChoirEngine } from './engine'
@@ -54,7 +54,8 @@ export function usePlayer(byId: Map<number, Chog>) {
     listeners.current.add(fn)
     return () => { listeners.current.delete(fn) }
   }, [])
-  return { staff, playing, toggle, stop, hear, bind, specOf, getEngine: get, current, onStep }
+  // one stable object per playing/paused state, so effects that depend on it do not re-run on every render
+  return useMemo(() => ({ staff, playing, toggle, stop, hear, bind, specOf, getEngine: get, current, onStep }), [playing, toggle, stop, hear, bind, specOf, get, current, onStep])
 }
 
 export type Player = ReturnType<typeof usePlayer>

@@ -290,3 +290,49 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 .stage .staff { --cell-h: 36px; }
 
 @media (max-width: 640px) { .tabs a { padding: 8px 12px; font-size: 13px; } .mark { font-size: 28px; } }
+
+/* ───────────── welcome ───────────── */
+.how { margin-left: auto; margin-right: 14px; border: 0; background: transparent; color: rgba(255, 255, 255, 0.82); font-weight: 700; font-size: 14px; padding: 8px 10px; border-radius: 99px; text-decoration: underline; text-underline-offset: 4px; }
+.how:hover { color: #fff; }
+.onb { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: var(--desk); overflow-y: auto; }
+.onb-card { position: relative; width: min(980px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; background: var(--paper); border-radius: 36px; padding: 40px 44px 24px; box-shadow: 0 40px 80px -30px rgba(6, 8, 70, 0.8); outline: none; display: grid; gap: 24px; }
+.onb-skip { position: absolute; top: 18px; right: 22px; border: 0; background: transparent; color: var(--ink-soft); font-weight: 700; padding: 8px 10px; border-radius: 99px; text-decoration: underline; text-underline-offset: 4px; }
+.onb-body { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 40px; align-items: center; min-height: 400px; animation: onb-in 0.28s ease-out; }
+@keyframes onb-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.onb-face { display: grid; justify-items: center; gap: 14px; }
+.onb-face .hero-face { width: 260px; height: 260px; }
+.onb-cap { margin: 0; color: var(--ink-soft); font-size: 14px; text-align: center; }
+.onb-cap b { font-family: var(--display); font-weight: 400; font-size: 16px; color: var(--vc); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; }
+.onb-text h1, .onb-wide h1 { margin: 0 0 10px; font-family: var(--display); font-weight: 400; font-size: 46px; line-height: 1.04; }
+.onb-text h2 { margin: 22px 0 10px; font-size: 16px; font-weight: 800; }
+.onb-text p, .onb-wide p { margin: 0 0 16px; font-size: 18px; line-height: 1.45; max-width: 52ch; }
+.onb-text .onb-fine, .onb-wide .onb-fine { font-size: 14px; color: var(--ink-soft); margin: 16px 0 0; }
+.vowels { display: flex; flex-wrap: wrap; gap: 10px; }
+.vbtn { position: relative; min-width: 92px; height: 64px; padding: 0 18px; border-radius: 22px; border: 3px solid var(--vc); background: #fff; font-family: var(--display); font-size: 28px; color: var(--ink); display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; transition: transform 0.12s, background 0.12s; }
+.vbtn small { position: absolute; bottom: 5px; font-family: var(--ui); font-size: 10px; font-weight: 800; color: var(--ink-soft); }
+.vbtn:hover { transform: translateY(-2px); }
+.vbtn.on { background: var(--vc); color: #fff; -webkit-text-stroke: 0; }
+.onb-wide { display: grid; gap: 2px; min-width: 0; grid-column: 1 / -1; }
+.onb-wide .loft { margin: 6px 0 4px; background: var(--paper-2); }
+.onb-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.onb-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dots { display: flex; gap: 8px; }
+.dots button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 99px; background: var(--line); transition: width 0.2s, background 0.2s; }
+.dots button.on { width: 28px; background: var(--ink); }
+.onb-nav { display: flex; gap: 8px; }
+.holder { margin-top: 14px; display: grid; gap: 8px; }
+.holder-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.holder-btns .btn { display: inline-flex; align-items: center; gap: 8px; }
+.holder-fine { color: var(--ink-soft); font-size: 13px; }
+.holder-line { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--ink-soft); font-size: 14px; }
+.holder-row { max-height: 130px; }
+@media (max-width: 760px) {
+  .onb { padding: 0; align-items: stretch; }
+  .onb-card { max-height: none; min-height: 100%; border-radius: 0; padding: 56px 20px 20px; }
+  .onb-body { grid-template-columns: 1fr; gap: 20px; }
+  .onb-face .hero-face { width: 180px; height: 180px; }
+  .onb-text h1, .onb-wide h1 { font-size: 34px; }
+  .onb-text p, .onb-wide p { font-size: 16px; }
+  .how { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .onb-body { animation: none; } }
