@@ -1,11 +1,12 @@
 import { chromium } from 'playwright'
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })
+await ctx.addInitScript(() => localStorage.setItem('chogchoir:welcome-seen', '1'))
 const page = await ctx.newPage()
 const errors = []
 page.on('pageerror', e => errors.push(e.message))
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()) })
-await page.goto('http://127.0.0.1:5188/', { waitUntil: 'networkidle' })
+await page.goto('http://127.0.0.1:5188/#studio', { waitUntil: 'networkidle' })
 await page.waitForSelector('.staff')
 const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }), page.click('button:has-text("Save clip")')])
 const path = '/tmp/chog-clip.' + dl.suggestedFilename().split('.').pop()
