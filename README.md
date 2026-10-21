@@ -70,7 +70,17 @@ cd ../qa && pnpm install && ./run-e2e.sh     # local chain + the whole flow in a
 
 ## Deployments
 
-_Filled in after deploy._ Rounds on testnet were seeded from the project wallet so the choir is not empty; those transactions are real and visible on the explorer.
+**Monad testnet (chain 10143), live.** Rounds last 30 minutes.
+
+| Contract | Address |
+|---|---|
+| ChogChoir | [`0x6A9E7EE73Fc6219A70fadfDE4203eE9f267Cadfe`](https://testnet.monadexplorer.com/address/0x6A9E7EE73Fc6219A70fadfDE4203eE9f267Cadfe) |
+| ChogReplica (free-to-claim copy of the collection) | [`0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844`](https://testnet.monadexplorer.com/address/0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844) |
+| ChogToken (free stand-in for $CHOG, `faucet()`) | [`0x0eEf587a5F3fF777225a80716dAd304e8b90917E`](https://testnet.monadexplorer.com/address/0x0eEf587a5F3fF777225a80716dAd304e8b90917E) |
+
+Rounds on testnet are seeded from the project wallet (`0x79e3…30e4`, a throwaway deployer) so the choir is not empty: it claims some replica Chogs and has each sing one note per round (`scripts/seed.mjs`). Those transactions are real and visible on the explorer.
+
+**Monad mainnet (chain 143):** not deployed yet.
 
 ## Honest limits
 
