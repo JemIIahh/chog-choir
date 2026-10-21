@@ -31,7 +31,8 @@ export type Net = 'main' | 'test'
 /**
  * Where the Choir lives. `main` is Monad mainnet with the real Chog Genesis collection; `test` is Monad testnet with
  * free replica Chogs, so anyone can try it. Both read from the committed deployments.json.
- * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points `test` at a local chain for tests.
+ * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points `test` at a local chain for tests (add &real=1 to treat it as the real
+ * collection: no free claims, no faucet). The production build ignores all of these.
  */
 export function resolveTargets(): Record<Net, Target> {
   const all = deployments as Record<string, Deployment | null>
@@ -54,7 +55,7 @@ export function resolveTargets(): Record<Net, Target> {
         contracts: { multicall3: { address: MULTICALL3 } },
       })
       const token = (q.get('token') ?? '0x0000000000000000000000000000000000000000') as Address
-      out.test = { chain, deployment: { choir: choir as Address, nft: nft as Address, token, encorePrice: q.get('price') ?? '1000000000000000000000', epochSeconds: Number(q.get('epoch') ?? 3600), faucet: true } }
+      out.test = { chain, deployment: { choir: choir as Address, nft: nft as Address, token, encorePrice: q.get('price') ?? '1000000000000000000000', epochSeconds: Number(q.get('epoch') ?? 3600), faucet: q.get('real') ? undefined : true } }
       out.main = { chain: monadMainnet, deployment: null }
     }
   }
@@ -68,10 +69,15 @@ export const rememberNet = (n: Net) => { try { localStorage.setItem(NET_KEY, n) 
  * Where a visitor lands. ?net=main|test wins, then their last choice, then the free testnet copy: most visitors (and every judge)
  * do not hold a real Chog, and the testnet choir is the one they can sing in. Real holders are offered the switch in the Choir.
  */
+export function pickNet(deployed: Record<Net, boolean>, fromUrl: string | null, saved: string | null): Net {
+  const ok = (n: string | null): n is Net => (n === 'main' || n === 'test') && deployed[n]
+  if (ok(fromUrl)) return fromUrl
+  if (ok(saved)) return saved
+  return deployed.test ? 'test' : 'main'
+}
+
 export function defaultNet(t: Record<Net, Target>): Net {
-  const ok = (n: string | null): n is Net => (n === 'main' || n === 'test') && !!t[n].deployment
-  const q = new URLSearchParams(location.search).get('net')
-  if (ok(q)) return q
-  try { const saved = localStorage.getItem(NET_KEY); if (ok(saved)) return saved } catch { /* ignore */ }
-  return t.test.deployment ? 'test' : 'main'
+  let saved: string | null = null
+  try { saved = localStorage.getItem(NET_KEY) } catch { /* private mode */ }
+  return pickNet({ main: !!t.main.deployment, test: !!t.test.deployment }, new URLSearchParams(location.search).get('net'), saved)
 }

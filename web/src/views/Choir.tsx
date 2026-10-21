@@ -271,7 +271,8 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
     } finally { setBusy(null) }
   }, [session, reader, d.nft, chogs.length, claim, flash])
 
-  const voices = notes.length
+  const voices = notes.length // what the staff shows, preview included
+  const realVoices = round?.notes.length ?? 0 // what is on the chain
   const explorer = target.chain.blockExplorers?.default.url
   const nextLayer = LAYERS.find(l => singersNow < l.at)
   const lowToken = !!tok && tok.balance < price
@@ -285,7 +286,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
             <div>
               <h1>{round ? `Round ${round.epoch + 1}` : 'The Choir'}</h1>
               <p className="sub">
-                {round ? `${keyName(key.root, key.mode)} · ${voices} ${voices === 1 ? 'voice' : 'voices'} · ${remaining > 0 ? `ends in ${clock(remaining)}` : 'ending…'}` : loadErr ?? 'Reading the chain…'}
+                {round ? `${keyName(key.root, key.mode)} · ${realVoices} ${realVoices === 1 ? 'voice' : 'voices'}${previewing ? ' (+ preview)' : ''} · ${remaining > 0 ? `ends in ${clock(remaining)}` : 'ending…'}` : loadErr ?? 'Reading the chain…'}
               </p>
             </div>
             <NetSwitch targets={targets} net={net} onChange={setNet} />
@@ -317,7 +318,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
               byId={byId}
               brush={canSing || canEncore ? brush : null}
               onPlace={place}
-              onRemove={() => undefined}
+              onRemove={n => place(n.step, n.pitch)} // a crowded cell is still a cell: notes stack there, as the +N badge shows
               pending={cell && brush ? { ...cell, chog: brush } : null}
             />
             {round && voices === 0 && (
@@ -360,7 +361,7 @@ function LiveChoir({ chogs, byId, player, target, d, targets, net, setNet }: Cho
                   ) : mine.length === 0 ? (
                     <p className="w-note">{sandbox ? 'You hold none here yet. This testnet copy is free to claim.' : 'This wallet holds no Chog Genesis. Switch to the free testnet copy to try it.'}</p>
                   ) : (
-                    <div className="thumbs row">
+                    <div className={`thumbs row ${mine.length > 10 ? 'many' : ''}`}>
                       {mine.map(id => {
                         const c = byId.get(id)!
                         const st = aliveStreak(id)

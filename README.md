@@ -8,11 +8,11 @@ Built for Chogathon 2026. Live app: _TBD_ · Demo video: _TBD_ · Contracts: see
 
 | | |
 |---|---|
-| **Songs** | Type a Chog's number, hear its song. Each of the 1,969 Chogs has its own key, scale, tempo, band and hook, read from its traits. Save it as a clip or share a link. |
+| **Songs** | Type a Chog's number, hear its song. Each of the 1,969 Chogs has its own key, scale, tempo, band and hook, read from its traits. **Hum a tune** and the Chog sings it back in its own voice and key. **Duet**: add a second Chog and the two sing together. Save it as a clip or poster, or share a link. |
 | **Studio** | A staff where every note is a Chog face. Pick a Chog (it sings), tap the staff to place its note, change tempo, space, brightness, key and beat. The whole band lives in the link. |
-| **The Choir** | A shared, on-chain choir. One Chog gets one note per round, and only its owner can place it. A loft shows all 1,969 Chogs seated by voice type, lighting up as they sing. The more Chogs have sung, the fuller the band: voices, then a pad, then bass, then drums. |
+| **The Choir** | A shared, on-chain choir. One Chog gets one note per round, and only its owner can place it. A loft shows all 1,969 Chogs seated by voice type, lighting up as they sing. The more Chogs have sung, the fuller the band: voices, then a pad, then bass, then drums. A slider asks "what if more Chogs sing?" and plays a preview of a fuller choir (clearly labelled, never sent to the chain). Holders of several Chogs sing them all in one transaction. A counter shows how much $CHOG the encores have burned. |
 | **Posters and clips** | Every song can be saved as a video clip (a spinning record for a single Chog) or a 1080×1350 generative poster painted from the song's notes in the Chog's own colours. |
-| **Records** | Finished rounds are sealed on-chain by anyone and play back here for good. |
+| **Records** | Finished rounds are sealed on-chain by anyone and play back here for good. **Play all** runs every sealed round in order, like an album. |
 
 ## How a Chog becomes a voice
 
@@ -36,14 +36,16 @@ The Chog page shows each line in plain words. The rules are in [`web/src/audio/v
 
 ## On-chain
 
-[`contracts/src/ChogChoir.sol`](contracts/src/ChogChoir.sol), tested with Foundry (25 tests).
+[`contracts/src/ChogChoir.sol`](contracts/src/ChogChoir.sol), tested with Foundry (38 tests for the choir, plus the epoch-key vectors).
 
 - `place(tokenId, step, pitch)`: the owner of a Chog adds its one note to the current round.
-- `encore(tokenId, step, pitch)`: a Chog that has sung can burn `encorePrice` of **$CHOG** (sent to `0x…dEaD`) for a second note, once per round.
+- `placeMany(ids, steps, pitches)`: the same for several Chogs in one transaction, all or nothing. The biggest holder on mainnet has 73 Chogs; the whole batch costs about 4.2M gas (about 58k per Chog) in a rehearsal against the real collection.
+- `encore(tokenId, step, pitch)`: a Chog that has sung can burn `encorePrice` of **$CHOG** for a second note, once per round. It is a real burn: the choir pulls the tokens in and calls the token's `burn()`, so the token's total supply drops by exactly the price (not a transfer to a dead address). `totalBurned` counts it.
 - Streaks and totals are stored per Chog. `loft(from, count)` returns every Chog's record in one call.
 - `seal(epoch)`: anyone can freeze a finished round into a hash and list it in the archive.
-- Each round's key is derived on-chain from the round number, so everyone sings in the same one.
-- The NFT is a constructor argument. On Monad mainnet it is the real Chog Genesis collection (`0xc96d…3763`); on testnet it is `ChogReplica`, a free-to-claim copy with the same ids and metadata, so judges can try everything.
+- Each round's key is derived on-chain from the round number, so everyone sings in the same one. Rounds start on multiples of their length, so a one-day round turns over at 00:00 UTC.
+- The NFT is a constructor argument. On Monad mainnet it is the real Chog Genesis collection (`0xc96d…3763`); on testnet it is `ChogReplica`, a free-to-claim copy with the same ids and metadata, so judges can try everything. The constructor refuses addresses that are not contracts.
+- The deploy script refuses to run on Monad mainnet unless `NFT` is the real collection, `TOKEN` is the real $CHOG and `EPOCH_SECONDS` was set on purpose, so a forgotten variable can never wire the real collection to a free stand-in token.
 
 ## Why the NFT is essential
 
@@ -56,9 +58,13 @@ The Chog page shows each line in plain words. The rules are in [`web/src/audio/v
 
 ```sh
 cd web && pnpm install && pnpm dev          # http://127.0.0.1:5188
-pnpm test                                    # 32 tests
+pnpm test                                    # unit tests
 cd ../contracts && forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts@v5.1.0 --no-git && forge test
-cd ../qa && pnpm install && ./run-e2e.sh     # local chain + the whole flow in a real browser
+cd ../qa && pnpm install && ./run-e2e.sh     # fresh local chain + the whole product in a real browser
+node fork-rehearsal.mjs                      # the mainnet deployment rehearsed on a fork, against the REAL Chog Genesis and $CHOG
+node mainnet-fork-ui.mjs                     # the same, through the page: the biggest real holder (73 Chogs) sings in 3 batches and takes an encore with real $CHOG
+node smoke-prod.mjs                          # the production build as a judge loads it (run `pnpm build` first)
+MODE=testnet EPOCH=300 node e2e.mjs <nft> <choir> <token>   # the same browser test on real Monad testnet (needs a 5-minute-round deployment and the deployer key in contracts/.env)
 node onboarding.mjs; node theme.mjs; node wallet.mjs   # the welcome, dark/light mode, the wallet button
 ```
 
@@ -71,17 +77,19 @@ node onboarding.mjs; node theme.mjs; node wallet.mjs   # the welcome, dark/light
 
 ## Deployments
 
-**Monad testnet (chain 10143), live.** Rounds last 30 minutes.
+**Monad testnet (chain 10143), live.** Rounds last 30 minutes. This is the v2 contract (real burn, batch singing, UTC-aligned rounds).
 
 | Contract | Address |
 |---|---|
-| ChogChoir | [`0x6A9E7EE73Fc6219A70fadfDE4203eE9f267Cadfe`](https://testnet.monadexplorer.com/address/0x6A9E7EE73Fc6219A70fadfDE4203eE9f267Cadfe) |
+| ChogChoir | [`0xa5Caaa02348578b0c04a32319ea9D1Dd21F8aa78`](https://testnet.monadexplorer.com/address/0xa5Caaa02348578b0c04a32319ea9D1Dd21F8aa78) |
 | ChogReplica (free-to-claim copy of the collection) | [`0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844`](https://testnet.monadexplorer.com/address/0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844) |
-| ChogToken (free stand-in for $CHOG, `faucet()`) | [`0x0eEf587a5F3fF777225a80716dAd304e8b90917E`](https://testnet.monadexplorer.com/address/0x0eEf587a5F3fF777225a80716dAd304e8b90917E) |
+| ChogToken (free, burnable stand-in for $CHOG, `faucet()`) | [`0x50BbE4bd1F17DeC172930ab99c2ef4A537b40d55`](https://testnet.monadexplorer.com/address/0x50BbE4bd1F17DeC172930ab99c2ef4A537b40d55) |
 
-Rounds on testnet are seeded from the project wallet (`0x79e3…30e4`, a throwaway deployer) so the choir is not empty: it claims some replica Chogs and has each sing one note per round (`scripts/seed.mjs`). Those transactions are real and visible on the explorer.
+Rounds on testnet are seeded from the project wallet (`0x79e3…30e4`, a throwaway deployer) so the choir is not empty: it claims some replica Chogs and has them sing one note each per round (`scripts/seed.mjs`, one `placeMany` transaction). Those transactions are real and visible on the explorer, and they are not user activity.
 
-**Monad mainnet (chain 143):** not deployed yet.
+**Monad mainnet (chain 143):** not deployed yet. [`docs/MAINNET.md`](docs/MAINNET.md) is the runbook.
+
+Testing is written up in [`docs/HARDENING.md`](docs/HARDENING.md).
 
 ## Honest limits
 

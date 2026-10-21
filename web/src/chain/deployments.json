@@ -1,9 +1,9 @@
 {
   "143": null,
   "10143": {
-    "choir": "0x6A9E7EE73Fc6219A70fadfDE4203eE9f267Cadfe",
+    "choir": "0xa5Caaa02348578b0c04a32319ea9D1Dd21F8aa78",
     "nft": "0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844",
-    "token": "0x0eEf587a5F3fF777225a80716dAd304e8b90917E",
+    "token": "0x50BbE4bd1F17DeC172930ab99c2ef4A537b40d55",
     "encorePrice": "1000000000000000000000",
     "epochSeconds": 1800,
     "faucet": true

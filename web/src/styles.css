@@ -171,7 +171,7 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 99px; border: 2px solid var(--line); background: var(--white); font-size: 13px; font-weight: 600; }
 .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--vc); }
-.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 7px; margin-top: 14px; max-height: 360px; overflow: auto; padding: 4px; scrollbar-width: thin; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); grid-auto-rows: min-content; gap: 7px; margin-top: 14px; max-height: 360px; overflow: auto; padding: 4px; scrollbar-width: thin; }
 .thumb { padding: 0; border: 3px solid transparent; border-radius: 16px; background: var(--paper-2); overflow: hidden; aspect-ratio: 1; content-visibility: auto; contain-intrinsic-size: 54px; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
 .thumb:hover { border-color: var(--vc); }
@@ -456,3 +456,6 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 .finder.duet .finder-in input { width: 64px; font-size: 17px; }
 .finder.duet .btn { height: 40px; }
 @media (max-width: 760px) { .hum-row { justify-content: center; } }
+
+/* a holder of many Chogs gets a taller list; without grid-auto-rows the rows used to be squashed on top of each other */
+.thumbs.row.many { max-height: 300px; }

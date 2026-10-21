@@ -1,5 +1,5 @@
-// Keeps the testnet choir from sounding empty: the project wallet claims a handful of replica Chogs and has each
-// sing one note per round, then seals finished rounds so Records has something to play.
+// Keeps the testnet choir from sounding empty: the project wallet claims a handful of replica Chogs and has them
+// sing one note each per round (all in one placeMany transaction per 25), then seals finished rounds so Records has something to play.
 // These are real transactions from the deployer wallet and are labelled as such in the README.
 //
 //   node seed.mjs                  # sing in the current round (skips Chogs that already sang)
@@ -32,6 +32,7 @@ const choirAbi = parseAbi([
   'function sealedBy(uint256) view returns (address)',
   'function noteCount(uint256) view returns (uint256)',
   'function place(uint16,uint8,uint8)',
+  'function placeMany(uint16[],uint8[],uint8[])',
   'function seal(uint256)',
 ])
 const nftAbi = parseAbi(['function claim(uint256)', 'function ownerOf(uint256) view returns (address)'])
@@ -57,7 +58,7 @@ async function send(address, abi, functionName, args) {
 
 async function sing() {
   const epoch = await pub.readContract({ address: dep.choir, abi: choirAbi, functionName: 'currentEpoch' })
-  let placed = 0
+  const todo = []
   for (const [i, { chog }] of cast.entries()) {
     try { await pub.readContract({ address: dep.nft, abi: nftAbi, functionName: 'ownerOf', args: [BigInt(chog.id)] }) }
     catch { await send(dep.nft, nftAbi, 'claim', [BigInt(chog.id)]); console.log('claimed', chog.id, `(#${chog.n})`) }
@@ -65,11 +66,14 @@ async function sing() {
     const h = ((chog.id * 40503 + Number(epoch) * 9973 + i * 31) >>> 0)
     const step = (i * 5 + Number(epoch) * 3 + (h % 3)) % 16
     const span = chog.spec.high - chog.spec.low + 1
-    const pitch = chog.spec.low + (h % span)
-    await send(dep.choir, choirAbi, 'place', [chog.id, step, pitch])
-    placed++
+    todo.push({ id: chog.id, step, pitch: chog.spec.low + (h % span) })
   }
-  console.log(`round ${Number(epoch) + 1}: ${placed} notes placed`)
+  // up to 25 Chogs per transaction
+  for (let i = 0; i < todo.length; i += 25) {
+    const b = todo.slice(i, i + 25)
+    await send(dep.choir, choirAbi, 'placeMany', [b.map(n => n.id), b.map(n => n.step), b.map(n => n.pitch)])
+  }
+  console.log(`round ${Number(epoch) + 1}: ${todo.length} notes placed`)
 }
 
 async function seal() {

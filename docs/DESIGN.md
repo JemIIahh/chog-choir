@@ -23,7 +23,7 @@
 - One note per Chog per round, on a 16-step, 12-pitch staff: small enough to read, and the contract stays simple.
 - The key is derived on-chain from the round number, so everyone sings together without coordination.
 - The band is built from the number of distinct singers, a public number anyone can verify.
-- Encore burns $CHOG to a dead address: a sink, not a payment to us.
+- Encore burns $CHOG with the token's own `burn()`: a sink, not a payment to us. Total supply drops, and the app counts what the choir has burned.
 - The NFT contract is a constructor argument so one codebase serves the replica and the real collection.
 - Two deployments: mainnet with real Chogs, testnet for anyone to try.
 
