@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { Player } from '../audio/usePlayer'
 import type { Chog } from '../data/chogs'
+import { token } from '../lib/look'
 
-// The page paints while it plays: every note that sounds blooms in its vowel's colour, like wet ink soaking into paper.
-// The desk itself stays clean paper. All on one canvas, multiplied over it (see .backdrop).
+// The page paints while it plays: every note that sounds blooms in its vowel's colour. On a dark look the blooms add up
+// like stage light, on a light look they multiply like wet ink. The look says which (--paint-op). One canvas, behind everything.
 
 const PAINT = ['255,90,71', '255,176,32', '37,207,148', '45,180,242', '155,107,255'] // ahh ehh eee ohh ooo
 
@@ -25,6 +26,10 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
     const g = cv.getContext('2d')!
     let raf = 0
     let last = 0
+    let op: GlobalCompositeOperation = 'multiply'
+    const readLook = () => { op = (token('--paint-op') || 'multiply') as GlobalCompositeOperation }
+    readLook()
+    window.addEventListener('chogchoir:look', readLook)
 
     const resize = () => {
       const dpr = Math.min(1.5, window.devicePixelRatio || 1)
@@ -44,7 +49,7 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
       g.setTransform(dpr, 0, 0, dpr, 0, 0)
       g.globalCompositeOperation = 'source-over'
       g.clearRect(0, 0, w, h)
-      g.globalCompositeOperation = 'multiply'
+      g.globalCompositeOperation = op
 
       const now = performance.now()
       blooms.current = blooms.current.filter(b => now - b.born < b.life)
@@ -92,7 +97,7 @@ export function PaintBackdrop({ player, byId }: { player: Player; byId: Map<numb
       }, delay)
     })
 
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); off() }
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); window.removeEventListener('chogchoir:look', readLook); off() }
   }, [])
 
   return <canvas ref={ref} className="backdrop" aria-hidden style={{ width: '100vw', height: '100vh' }} />

@@ -6,6 +6,7 @@ import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
 import { defaultNet, resolveTargets, type Net } from './chain/config'
 import { Onboarding } from './components/Onboarding'
+import { LookSwitch } from './components/LookSwitch'
 import { PaintBackdrop } from './components/PaintBackdrop'
 import { Choir } from './views/Choir'
 import { Records } from './views/Records'
@@ -86,6 +87,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
   return (
     <>
     <PaintBackdrop player={player} byId={byId} />
+    <LookSwitch />
     <div className={`app ${welcome ? 'hushed' : ''}`}>
       <header className={`top ${player.playing ? 'playing' : ''}`}>
         <a className="mark" href="#" onClick={go('songs')} aria-label="Chog Choir">

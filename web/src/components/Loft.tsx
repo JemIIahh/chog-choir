@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { VoiceType } from '../audio/voice'
 import type { LoftStat } from '../chain/client'
+import { token, useLook } from '../lib/look'
 import type { Chog } from '../data/chogs'
 
 const RING = ['#ff6b57', '#ffb02e', '#2fcf95', '#35b6f0', '#a47bff']
@@ -94,6 +95,7 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
   const wrap = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const [size, setSize] = useState({ w: 760, h: 270 })
+  const look = useLook()
   const [tip, setTip] = useState<{ x: number; y: number; c: Chog } | null>(null)
 
   useEffect(() => {
@@ -136,15 +138,15 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
       g.arc(x, y, ever ? r : r * 0.78, 0, Math.PI * 2)
       if (sungNow) { g.fillStyle = RING[c.spec.vowel]; g.fill() }
       else if (ever) { g.fillStyle = RING[c.spec.vowel] + '99'; g.fill() }
-      else { g.fillStyle = 'rgba(28,30,43,0.13)'; g.fill() }
-      if (mine.has(c.id)) { g.lineWidth = 2; g.strokeStyle = '#1c1e2b'; g.beginPath(); g.arc(x, y, r + 2, 0, Math.PI * 2); g.stroke() }
+      else { g.fillStyle = token('--seat-off'); g.fill() }
+      if (mine.has(c.id)) { g.lineWidth = 2; g.strokeStyle = token('--ink'); g.beginPath(); g.arc(x, y, r + 2, 0, Math.PI * 2); g.stroke() }
       if (selectedId === c.id) { g.lineWidth = 3; g.strokeStyle = '#ffb800'; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke() }
     })
     g.font = '700 12px "Hanken Grotesk", system-ui, sans-serif'
-    g.fillStyle = '#64635a'
+    g.fillStyle = token('--ink-soft')
     g.textAlign = 'center'
     g.fillText('seated by voice, left to right: soprano, alto, tenor, bass', size.w / 2, size.h - 4)
-  }, [lay, stats, epoch, mine, selectedId, size])
+  }, [lay, stats, epoch, mine, selectedId, size, look])
 
   const find = (e: React.PointerEvent | React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()

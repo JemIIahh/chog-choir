@@ -1,8 +1,9 @@
 // Screenshots of every view at desktop and phone width, with the song playing so the backdrop is painted.
-// usage: node looks.mjs <outDir> [url]
+// usage: node looks.mjs <outDir> [look] [url]
 import { chromium } from 'playwright'
 const out = process.argv[2]
-const url = process.argv[3] ?? 'http://127.0.0.1:5188/'
+const look = process.argv[3] ?? 'stage'
+const url = (process.argv[4] ?? 'http://127.0.0.1:5188/') + `?look=${look}`
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
 const views = [
   ['welcome', '', true],
@@ -21,7 +22,7 @@ for (const [w, h, tag] of [[1440, 900, 'desktop'], [390, 844, 'mobile']]) {
     await page.waitForTimeout(900)
     if (name === 'songs') { await page.locator('.play').first().click().catch(() => {}); await page.waitForTimeout(1500) }
     if (name === 'welcome') { await page.locator('.play').first().click().catch(() => {}); await page.waitForTimeout(1400) }
-    await page.screenshot({ path: `${out}/${tag}-${name}.png`, fullPage: tag === 'mobile' && name !== 'welcome' })
+    await page.screenshot({ path: `${out}/${look}-${tag}-${name}.png`, fullPage: tag === 'mobile' && name !== 'welcome' })
     if (errors.length) console.log(tag, name, 'ERRORS', errors.join(' | '))
     await page.close()
   }
