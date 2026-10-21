@@ -43,17 +43,11 @@ const chogs = m.rows.map(r => {
   m.traits.forEach((t, i) => { if (r[2 + i] >= 0) traits[t] = m.values[i][r[2 + i]] })
   return { id: r[0], n: r[1], spec: voiceFor(traits).spec }
 })
-const PLAN = [ // [voice type, steps it sings on across rounds]
-  ['bass', [0, 8]], ['bass', [4, 12]], ['tenor', [2, 10]], ['tenor', [6, 14]],
-  ['alto', [3, 11]], ['alto', [7, 15]], ['soprano', [1, 9]], ['soprano', [5, 13]], ['alto', [0, 8]], ['tenor', [12, 4]],
-]
-const used = new Set()
-let vowelSeen = new Set()
-const cast = PLAN.map(([type, steps]) => {
-  const pick = chogs.find(c => c.spec.voiceType === type && !used.has(c.id) && !vowelSeen.has(c.spec.vowel + type) && c.id > 3) ?? chogs.find(c => c.spec.voiceType === type && !used.has(c.id))
-  used.add(pick.id); vowelSeen.add(pick.spec.vowel + type)
-  return { chog: pick, steps }
-})
+// a balanced ensemble: every voice type, picked by a stable hash so the same Chogs sing every run
+const COUNT = Number(arg('--count') ?? 28)
+const typeOrder = ['bass', 'tenor', 'alto', 'soprano']
+const byType = Object.fromEntries(typeOrder.map(t => [t, chogs.filter(c => c.spec.voiceType === t).sort((a, b) => ((a.id * 2654435761) >>> 0) - ((b.id * 2654435761) >>> 0))]))
+const cast = Array.from({ length: COUNT }, (_, i) => byType[typeOrder[i % 4]][Math.floor(i / 4)]).filter(Boolean).map(chog => ({ chog }))
 
 async function send(address, abi, functionName, args) {
   const { request } = await pub.simulateContract({ account, address, abi, functionName, args })
@@ -64,13 +58,14 @@ async function send(address, abi, functionName, args) {
 async function sing() {
   const epoch = await pub.readContract({ address: dep.choir, abi: choirAbi, functionName: 'currentEpoch' })
   let placed = 0
-  for (const [i, { chog, steps }] of cast.entries()) {
+  for (const [i, { chog }] of cast.entries()) {
     try { await pub.readContract({ address: dep.nft, abi: nftAbi, functionName: 'ownerOf', args: [BigInt(chog.id)] }) }
     catch { await send(dep.nft, nftAbi, 'claim', [BigInt(chog.id)]); console.log('claimed', chog.id, `(#${chog.n})`) }
     if (await pub.readContract({ address: dep.choir, abi: choirAbi, functionName: 'hasSung', args: [epoch, chog.id] })) continue
-    const step = steps[Number(epoch) % steps.length]
+    const h = ((chog.id * 40503 + Number(epoch) * 9973 + i * 31) >>> 0)
+    const step = (i * 5 + Number(epoch) * 3 + (h % 3)) % 16
     const span = chog.spec.high - chog.spec.low + 1
-    const pitch = chog.spec.low + ((i * 3 + Number(epoch)) % span)
+    const pitch = chog.spec.low + (h % span)
     await send(dep.choir, choirAbi, 'place', [chog.id, step, pitch])
     placed++
   }

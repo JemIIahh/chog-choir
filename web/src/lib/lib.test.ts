@@ -42,6 +42,7 @@ describe('share codec', () => {
     mode: 3,
     space: 40,
     bright: 70,
+    beat: 2,
     notes: [
       { id: 1, step: 0, pitch: 0 },
       { id: 1462, step: 15, pitch: 11 },
@@ -54,7 +55,16 @@ describe('share codec', () => {
   it('stays small and url safe', () => {
     const s = encodeSong(song)
     expect(s).toMatch(/^[A-Za-z0-9_-]+$/)
-    expect(s.length).toBeLessThan(30)
+    expect(s.length).toBeLessThan(32)
+  })
+
+  it('still opens links made before the band existed', () => {
+    // version 1: 6-byte header (no beat byte)
+    const old = btoa(String.fromCharCode(1, 96 - 56, (9 << 4) | 3, 40, 70, 1, 0x00, 0x00, 0x00)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    const d = decodeSong(old)
+    expect(d).toBeNull() // id 0 is not a Chog, so this is rejected rather than misread
+    const valid = btoa(String.fromCharCode(1, 40, (9 << 4) | 3, 40, 70, 1, 0x00, 0x01, 0x00)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    expect(decodeSong(valid)).toMatchObject({ beat: 0, tempo: 96, notes: [{ id: 1, step: 0, pitch: 0 }] })
   })
 
   it('rejects garbage instead of throwing', () => {

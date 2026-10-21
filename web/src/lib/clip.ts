@@ -4,6 +4,8 @@ import type { Chog } from '../data/chogs'
 import { thumb } from '../data/chogs'
 import { keyName, PITCHES, STEPS } from './music'
 import type { Song } from './share'
+import { BEATS } from '../audio/band'
+import { thumbLg } from '../data/chogs'
 
 const SIZE = 1080
 const RING = ['#ff6b57', '#ffb02e', '#2fcf95', '#35b6f0', '#a47bff']
@@ -112,6 +114,71 @@ function makeDrawer(song: Song, byId: Map<number, Chog>, faces: Map<number, HTML
   }
 }
 
+/** One Chog, big: its face keeps time, and bubbles pop when it sings. Used for single-Chog song clips. */
+function makeCardDrawer(song: Song, chog: Chog, face: HTMLImageElement, title: string) {
+  const stepDur = stepSeconds(song.tempo)
+  const meta = `${keyName(song.root, song.mode)}, ${song.tempo} bpm, ${BEATS[song.beat].toLowerCase()} beat`
+  return (g: CanvasRenderingContext2D, { t }: Frame) => {
+    g.fillStyle = '#2a36d4'
+    g.fillRect(0, 0, SIZE, SIZE)
+    g.fillStyle = '#f5f6fd'
+    round(g, 34, 34, SIZE - 68, SIZE - 68, 52); g.fill()
+
+    g.textAlign = 'center'
+    g.fillStyle = INK
+    g.font = '44px "Bagel Fat One", system-ui, sans-serif'
+    g.fillText('Chog Choir', SIZE / 2, 118)
+
+    const elapsed = Math.max(0, t)
+    const stepIdx = Math.floor(elapsed / stepDur)
+    const step = stepIdx % STEPS
+    const since = elapsed - stepIdx * stepDur
+    const sings = t >= 0 && song.notes.some(n => n.step === step)
+    const k = t < 0 ? 1 : 1 + (sings ? 0.07 : 0.02) * Math.max(0, 1 - since / (sings ? 0.3 : 0.18))
+    const size = 470 * k
+    const cx = SIZE / 2, cy = 420
+    g.save()
+    g.shadowColor = 'rgba(20,20,58,.22)'; g.shadowOffsetY = 14; g.shadowBlur = 0
+    g.fillStyle = RING[chog.spec.vowel]
+    round(g, cx - size / 2 - 12, cy - size / 2 - 12, size + 24, size + 24, 78); g.fill()
+    g.restore()
+    g.save()
+    round(g, cx - size / 2, cy - size / 2, size, size, 66); g.clip()
+    g.drawImage(face, cx - size / 2, cy - size / 2, size, size)
+    g.restore()
+
+    if (sings && since < 0.8) {
+      g.save()
+      g.globalAlpha = Math.max(0, 1 - since / 0.8)
+      g.font = '64px "Bagel Fat One", system-ui, sans-serif'
+      g.lineWidth = 12; g.strokeStyle = '#fff'; g.lineJoin = 'round'
+      const y = cy - size / 2 - 22 - since * 70
+      g.strokeText(SOUND[chog.spec.vowel], cx, y)
+      g.fillStyle = RING[chog.spec.vowel]
+      g.fillText(SOUND[chog.spec.vowel], cx, y)
+      g.restore()
+    }
+
+    g.fillStyle = INK
+    g.font = '86px "Bagel Fat One", system-ui, sans-serif'
+    g.fillText(title, SIZE / 2, 770)
+    g.fillStyle = '#55577f'
+    g.font = '600 32px "Hanken Grotesk", system-ui, sans-serif'
+    g.fillText(meta, SIZE / 2, 822)
+
+    // the loop, one dot per step: the dots that sing are filled, the playhead is yellow
+    const x0 = SIZE / 2 - (STEPS - 1) * 26
+    for (let s = 0; s < STEPS; s++) {
+      const sing = song.notes.some(n => n.step === s)
+      g.beginPath()
+      g.arc(x0 + s * 52, 910, s === step && t >= 0 ? 15 : 10, 0, Math.PI * 2)
+      g.fillStyle = s === step && t >= 0 ? '#ffd23f' : sing ? RING[chog.spec.vowel] : 'rgba(20,20,58,.16)'
+      g.fill()
+    }
+    g.textAlign = 'left'
+  }
+}
+
 function pickMime(): { mime: string; ext: string } {
   const options = [
     ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'mp4'],
@@ -130,12 +197,14 @@ export type ClipOptions = {
   engine: ChoirEngine
   title?: string
   subtitle?: string
+  /** 'card' shows one Chog large; the default shows the whole staff */
+  card?: Chog
   loops?: number
   onProgress?(fraction: number): void
 }
 
 /** Plays the song once through, and records what you hear and see into a short video. */
-export async function recordClip({ song, byId, engine, title, subtitle, loops = 2, onProgress }: ClipOptions): Promise<{ blob: Blob; ext: string }> {
+export async function recordClip({ song, byId, engine, title, subtitle, card, loops = 2, onProgress }: ClipOptions): Promise<{ blob: Blob; ext: string }> {
   const { mime, ext } = pickMime()
   const ids = [...new Set(song.notes.map(n => n.id))]
   const faces = new Map<number, HTMLImageElement>()
@@ -145,7 +214,10 @@ export async function recordClip({ song, byId, engine, title, subtitle, loops = 
     ...ids.map(async id => { const c = byId.get(id); if (c) faces.set(id, await loadImg(thumb(c.n))) }),
   ])
 
-  const draw = makeDrawer(song, byId, faces, title ?? keyName(song.root, song.mode), subtitle ?? `${ids.length} ${ids.length === 1 ? 'Chog' : 'Chogs'} · ${song.notes.length} notes`)
+  const cardFace = card ? await loadImg(thumbLg(card.n)) : null
+  const draw = card && cardFace
+    ? makeCardDrawer(song, card, cardFace, title ?? `Chog #${card.n}`)
+    : makeDrawer(song, byId, faces, title ?? keyName(song.root, song.mode), subtitle ?? `${ids.length} ${ids.length === 1 ? 'Chog' : 'Chogs'} · ${song.notes.length} notes`)
   const canvas = document.createElement('canvas')
   canvas.width = canvas.height = SIZE
   const g = canvas.getContext('2d')!

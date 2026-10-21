@@ -7,7 +7,7 @@ import {ChogChoir} from "../src/ChogChoir.sol";
 /// Prints epochKey vectors so the front end's mirror of the function can be checked against the contract.
 contract EpochKeyVectors is Test {
     function test_printVectors() public {
-        ChogChoir c = new ChogChoir(address(1), 1 hours);
+        ChogChoir c = new ChogChoir(address(1), 1 hours, address(0), 0);
         string memory s = "{";
         for (uint256 e = 0; e < 12; e++) {
             (uint8 r, uint8 m) = c.epochKey(e);

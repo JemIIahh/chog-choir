@@ -122,7 +122,7 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 
 .keypick { display: grid; gap: 8px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.82); }
 .key-row { display: flex; gap: 6px; }
-.keypick select { height: 36px; padding: 0 8px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.26); background: var(--ink); color: #fff; font-weight: 600; }
+.keypick select { height: 36px; padding: 0 6px; max-width: 120px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.26); background: var(--ink); color: #fff; font-weight: 600; }
 .keypick select:disabled { opacity: 0.55; }
 .dock-actions { display: flex; gap: 8px; }
 
@@ -242,3 +242,49 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 .r-t { display: grid; }
 
 .w-err a { color: inherit; font-weight: 800; }
+
+/* ───────────── songs (front door) ───────────── */
+.finder { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0 18px; }
+.finder-in { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 16px; border-radius: 99px; background: #fff; border: 2px solid var(--ink); font-weight: 800; }
+.finder-in input { width: 110px; height: 100%; border: 0; outline: 0; background: transparent; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.finder-in:focus-within { box-shadow: 0 0 0 4px color-mix(in srgb, var(--sun) 70%, transparent); }
+.finder .btn { height: 46px; }
+.hero { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 26px; align-items: center; margin: 4px 0 20px; }
+.hero-face { position: relative; width: 270px; height: 270px; border-radius: 44px; background: var(--paper-2); border: 8px solid var(--vc); box-shadow: 0 10px 0 rgba(20, 20, 58, 0.18); will-change: transform; }
+.hero-face img { width: 100%; height: 100%; object-fit: cover; border-radius: 34px; }
+.bubble.big { font-size: 34px; top: 14px; z-index: 3; -webkit-text-stroke: 7px #fff; }
+.hero-info h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 46px; line-height: 1; }
+.hero-meta { margin: 10px 0 2px; font-size: 18px; font-weight: 700; }
+.hero-vowel { margin: 0 0 18px; color: var(--ink-soft); }
+.hero-vowel b { font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--vc); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; }
+.hero-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.play.wide { width: auto; height: 56px; padding: 0 26px 0 20px; border-radius: 99px; display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; }
+.play.wide:not(.on) svg { margin-left: 0; }
+.next { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.stage.songs .staff { --cell-h: 26px; }
+.stage.songs .note { width: min(calc(100% - 4px), 24px); border-width: 2px; }
+.stage.songs .gl { font-size: 10px; }
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .hero-face { width: 200px; height: 200px; }
+  .hero-btns { justify-content: center; }
+}
+
+/* ───────────── choir v2: community, loft, streaks ───────────── */
+.netswitch { display: inline-flex; padding: 4px; border-radius: 99px; background: var(--paper-2); flex-shrink: 0; }
+.netswitch button { border: 0; background: transparent; padding: 7px 14px; border-radius: 99px; font-weight: 700; font-size: 13px; color: var(--ink-soft); }
+.netswitch button.on { background: var(--ink); color: #fff; }
+.community { margin: 2px 0 12px; display: grid; gap: 8px; }
+.c-nums { font-size: 16px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.c-nums b { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; }
+.c-nums span { color: var(--ink-soft); font-size: 14px; }
+.c-meter { height: 12px; border-radius: 99px; background: var(--paper-2); overflow: hidden; }
+.c-meter i { display: block; height: 100%; border-radius: 99px; background: var(--sun); box-shadow: inset 0 -3px 0 rgba(20, 20, 58, 0.12); transition: width 0.6s; }
+.c-next { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.loft { position: relative; margin: 6px 0 14px; border-radius: 18px; background: #fff; }
+.loft canvas { display: block; cursor: pointer; border-radius: 18px; }
+.loft-tip { position: absolute; z-index: 5; width: 140px; padding: 6px 10px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 12px; display: grid; pointer-events: none; text-align: center; }
+.loft-tip b { font-size: 13px; }
+.thumb { position: relative; }
+.streak { position: absolute; right: 2px; bottom: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--sun); color: var(--ink); font-size: 11px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.stage .staff { --cell-h: 36px; }

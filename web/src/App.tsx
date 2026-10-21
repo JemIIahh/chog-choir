@@ -3,12 +3,20 @@ import { renderSong } from './audio/render'
 import { usePlayer } from './audio/usePlayer'
 import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
+import { defaultNet, resolveTargets, type Net } from './chain/config'
 import { Choir } from './views/Choir'
 import { Records } from './views/Records'
+import { Songs } from './views/Songs'
 import { Studio } from './views/Studio'
 
-type View = 'studio' | 'choir' | 'records'
-const viewFromHash = (): View => (location.hash.startsWith('#choir') ? 'choir' : location.hash.startsWith('#records') ? 'records' : 'studio')
+type View = 'songs' | 'studio' | 'choir' | 'records'
+const viewFromHash = (): View => {
+  const h = location.hash
+  if (h.startsWith('#choir')) return 'choir'
+  if (h.startsWith('#records')) return 'records'
+  if (h.startsWith('#s=') || h.startsWith('#studio')) return 'studio'
+  return 'songs'
+}
 
 export default function App() {
   const [chogs, setChogs] = useState<Chog[] | null>(null)
@@ -28,8 +36,11 @@ function Splash({ text }: { text: string }) {
 
 function Shell({ chogs }: { chogs: Chog[] }) {
   const byId = useMemo(() => new Map(chogs.map(c => [c.id, c])), [chogs])
+  const byN = useMemo(() => new Map(chogs.map(c => [c.n, c])), [chogs])
   const player = usePlayer(byId)
   const [view, setView] = useState<View>(viewFromHash)
+  const targets = useMemo(resolveTargets, [])
+  const [net, setNet] = useState<Net>(() => (new URLSearchParams(location.search).get('net') as Net | null) ?? defaultNet(targets))
 
   // lets tests render and measure the sound without a speaker
   useEffect(() => {
@@ -53,23 +64,25 @@ function Shell({ chogs }: { chogs: Chog[] }) {
     e.preventDefault()
     if (v === view) return
     player.stop()
-    history.pushState(null, '', v === 'studio' ? location.pathname : `#${v}`)
+    history.pushState(null, '', v === 'songs' ? location.pathname : `#${v}`)
     setView(v)
   }
 
   return (
     <div className="app">
       <header className="top">
-        <a className="mark" href="#" onClick={go('studio')}>Chog Choir</a>
+        <a className="mark" href="#" onClick={go('songs')}>Chog Choir</a>
         <nav className="tabs" aria-label="Sections">
-          <a href="#" className={view === 'studio' ? 'on' : ''} onClick={go('studio')} aria-current={view === 'studio' ? 'page' : undefined}>Studio</a>
+          <a href="#" className={view === 'songs' ? 'on' : ''} onClick={go('songs')} aria-current={view === 'songs' ? 'page' : undefined}>Songs</a>
+          <a href="#studio" className={view === 'studio' ? 'on' : ''} onClick={go('studio')} aria-current={view === 'studio' ? 'page' : undefined}>Studio</a>
           <a href="#choir" className={view === 'choir' ? 'on' : ''} onClick={go('choir')} aria-current={view === 'choir' ? 'page' : undefined}>The Choir</a>
           <a href="#records" className={view === 'records' ? 'on' : ''} onClick={go('records')} aria-current={view === 'records' ? 'page' : undefined}>Records</a>
         </nav>
       </header>
+      {view === 'songs' && <Songs chogs={chogs} byId={byId} byN={byN} player={player} />}
       {view === 'studio' && <Studio chogs={chogs} byId={byId} player={player} />}
-      {view === 'choir' && <Choir chogs={chogs} byId={byId} player={player} />}
-      {view === 'records' && <Records byId={byId} player={player} />}
+      {view === 'choir' && <Choir chogs={chogs} byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
+      {view === 'records' && <Records byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
     </div>
   )
 }

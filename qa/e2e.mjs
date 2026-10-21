@@ -1,10 +1,10 @@
 import { chromium } from 'playwright'
 import assert from 'node:assert/strict'
 
-const NFT = process.argv[2], CHOIR = process.argv[3]
+const NFT = process.argv[2], CHOIR = process.argv[3], TOKEN = process.argv[4]
 const ACCT = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 const RPC = 'http://127.0.0.1:8545'
-const BASE = `http://127.0.0.1:5188/?chain=31337&rpc=${RPC}&choir=${CHOIR}&nft=${NFT}&epoch=3600`
+const BASE = `http://127.0.0.1:5188/?chain=31337&rpc=${RPC}&choir=${CHOIR}&nft=${NFT}&token=${TOKEN}&epoch=3600`
 const rpc = (method, params = []) => fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) }).then(r => r.json())
 
 const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
@@ -34,7 +34,7 @@ const step = msg => console.log('•', msg)
 
 await page.goto(BASE + '#choir', { waitUntil: 'networkidle' })
 await page.waitForSelector('.stage h1')
-await page.waitForFunction(() => document.querySelector('.stage h1')?.textContent === 'Round 1')
+await page.waitForFunction(() => document.querySelector('.stage h1')?.textContent === 'Round 1', null, { timeout: 15000 }).catch(async e => { console.log('H1 now:', JSON.stringify(await page.textContent('.stage h1')), 'SUB:', await page.textContent('.stage .sub'), 'URL', page.url()); throw e })
 assert.match(await page.textContent('.stage .sub'), /0 voices/)
 step('round 1 loads from chain, 0 voices')
 
@@ -57,9 +57,28 @@ await page.click('button:has-text("Sing Chog")')
 await page.waitForFunction(() => /1 voice\b/.test(document.querySelector('.stage .sub')?.textContent ?? ''), null, { timeout: 20000 })
 assert.equal(await page.locator('.grid .note:not(.pending)').count(), 1)
 step('note is on chain and on the staff (1 voice)')
-await page.waitForFunction(() => /already sang/.test(document.body.textContent ?? ''))
-step('same Chog is blocked from singing twice')
+await page.waitForFunction(() => /sang this round/.test(document.body.textContent ?? ''))
+assert.equal(await page.locator('button:has-text("Sing Chog")').count(), 0)
+step('same Chog cannot sing a second plain note; it is offered an encore instead')
 await page.screenshot({ path: '/tmp/e2e-3-sung.png' })
+
+// community counter and the loft see the new singer
+await page.waitForFunction(() => /1 of 1,969 Chogs have sung/.test(document.querySelector('.community')?.textContent ?? ''), null, { timeout: 25000 })
+assert.equal(await page.locator('.loft canvas').count(), 1)
+step('community meter shows 1 of 1,969 Chogs have sung; loft is drawn')
+
+// encore: burn test $CHOG for a second note
+await page.click('.grid .cell >> nth=' + (6 * 16 + 9))
+await page.click('button:has-text("Get 1,000 test")')
+await page.waitForSelector('button.big:has-text("burn 1,000")', { timeout: 20000 })
+step('test $CHOG faucet worked')
+await page.screenshot({ path: '/tmp/e2e-3b-encore.png' })
+await page.click('button.big:has-text("burn 1,000")')
+await page.waitForFunction(() => /2 voices/.test(document.querySelector('.stage .sub')?.textContent ?? ''), null, { timeout: 30000 })
+step('encore burned $CHOG and added a second voice (2 voices)')
+const dead = await (await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: TOKEN, data: '0x70a08231' + '000000000000000000000000000000000000000000000000000000000000dead' }, 'latest'] }) })).json()
+assert.equal(BigInt(dead.result), 1000n * 10n ** 18n)
+step('1,000 $CHOG really sits at the burn address')
 
 // play the live round
 await page.click('.play')
@@ -76,7 +95,7 @@ await page.waitForSelector('.wallet.on')
 await page.click('button:has-text("Seal it")')
 await page.waitForSelector('.round', { timeout: 20000 })
 step('round sealed and listed in Records')
-assert.match(await page.textContent('.stage .sub'), /1 voice/)
+assert.match(await page.textContent('.stage .sub'), /2 voices/)
 await page.click('.play')
 await page.waitForTimeout(1200)
 assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.playhead')).opacity), '1')

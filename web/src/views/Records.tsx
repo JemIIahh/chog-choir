@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Player } from '../audio/usePlayer'
 import { explain, makeReader, readRound, readSealed, readWaiting, sealRound, type Sealed, type Waiting } from '../chain/client'
-import { resolveTarget } from '../chain/config'
+import type { Net, Target } from '../chain/config'
 import { useWallet } from '../chain/useWallet'
 import { Dock } from '../components/Dock'
+import { NetSwitch } from '../components/NetSwitch'
 import { Staff } from '../components/Staff'
 import { WalletPanel } from '../components/WalletPanel'
 import { thumb, type Chog } from '../data/chogs'
@@ -15,13 +16,15 @@ import { NotDeployed } from './Choir'
 const when = (unix: number) => new Date(unix * 1000).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
-export function Records(props: { byId: Map<number, Chog>; player: Player }) {
-  const target = useMemo(resolveTarget, [])
-  if (!target.deployment) return <NotDeployed />
-  return <Archive {...props} target={target} d={target.deployment} />
+type RecordsProps = { byId: Map<number, Chog>; player: Player; targets: Record<Net, Target>; net: Net; setNet(n: Net): void }
+
+export function Records(props: RecordsProps) {
+  const target = props.targets[props.net]
+  if (!target.deployment) return <NotDeployed what="Records" />
+  return <Archive key={props.net} {...props} target={target} d={target.deployment} />
 }
 
-function Archive({ byId, player, target, d }: { byId: Map<number, Chog>; player: Player; target: ReturnType<typeof resolveTarget>; d: NonNullable<ReturnType<typeof resolveTarget>['deployment']> }) {
+function Archive({ byId, player, target, d, targets, net, setNet }: RecordsProps & { target: Target; d: NonNullable<Target['deployment']> }) {
   const reader = useMemo(() => makeReader(target), [target])
   const wallet = useWallet(target.chain)
   const { flash, node: toast } = useToast()
@@ -29,7 +32,7 @@ function Archive({ byId, player, target, d }: { byId: Map<number, Chog>; player:
   const [waiting, setWaiting] = useState<Waiting[]>([])
   const [epochNow, setEpochNow] = useState(0)
   const [pickedEpoch, setPickedEpoch] = useState<number | null>(null)
-  const [controls, setControls] = useState({ tempo: 84, space: 55, bright: 55 })
+  const [controls, setControls] = useState({ tempo: 84, space: 55, bright: 55, beat: 1 })
   const [busy, setBusy] = useState<number | null>(null)
 
   const load = useCallback(async () => {
@@ -81,6 +84,7 @@ function Archive({ byId, player, target, d }: { byId: Map<number, Chog>; player:
                   : sealed === null ? 'Reading the chain…' : 'Nothing sealed yet.'}
               </p>
             </div>
+            <NetSwitch targets={targets} net={net} onChange={setNet} />
           </div>
 
           <div className="staff-wrap">

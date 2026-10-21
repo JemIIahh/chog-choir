@@ -1,6 +1,6 @@
 import { BaseError, ContractFunctionRevertedError, createPublicClient, http, type Address, type PublicClient } from 'viem'
 import type { Note } from '../lib/share'
-import { choirAbi, nftAbi } from './abi'
+import { choirAbi, nftAbi, tokenAbi } from './abi'
 import type { Deployment, Target } from './config'
 import type { Session } from './wallet'
 
@@ -70,6 +70,7 @@ export async function readWaiting(r: Reader, d: Deployment, current: number): Pr
 export async function readHeld(r: Reader, nft: Address, account: Address, supply = 1969): Promise<number[]> {
   const res = await r.pub.multicall({
     allowFailure: true,
+    batchSize: 200_000, // one eth_call, not ~70: the public RPC allows 50 requests a second
     contracts: Array.from({ length: supply }, (_, i) => ({ address: nft, abi: nftAbi, functionName: 'ownerOf', args: [BigInt(i + 1)] }) as const),
   })
   const mine: number[] = []
@@ -95,10 +96,53 @@ export async function isClaimed(r: Reader, nft: Address, id: number): Promise<bo
   }
 }
 
+export type LoftStat = { total: number; last: number; streak: number; best: number }
+
+/** Every Chog's record in one call. Index 0 is token id 1. */
+export async function readLoft(r: Reader, d: Deployment, supply = 1969): Promise<LoftStat[]> {
+  const rows = await r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'loft', args: [1n, BigInt(supply)] })
+  return rows.map(x => ({ total: x.total, last: x.lastPlusOne, streak: x.streak, best: x.best }))
+}
+
+export async function readCollective(r: Reader, d: Deployment): Promise<{ voices: number; singers: number }> {
+  const [voices, singers] = await Promise.all([
+    r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'voices' }),
+    r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'singers' }),
+  ])
+  return { voices: Number(voices), singers: Number(singers) }
+}
+
+/** The price lives in the contract; the UI never trusts a config file for it. */
+export const readPrice = (r: Reader, d: Deployment) => r.pub.readContract({ address: d.choir, abi: choirAbi, functionName: 'encorePrice' })
+
+export const ZERO = '0x0000000000000000000000000000000000000000'
+export const encoresOn = (d: Deployment) => d.token.toLowerCase() !== ZERO
+
+export async function readToken(r: Reader, d: Deployment, account: Address): Promise<{ balance: bigint; allowance: bigint }> {
+  const [balance, allowance] = await Promise.all([
+    r.pub.readContract({ address: d.token, abi: tokenAbi, functionName: 'balanceOf', args: [account] }),
+    r.pub.readContract({ address: d.token, abi: tokenAbi, functionName: 'allowance', args: [account, d.choir] }),
+  ])
+  return { balance, allowance }
+}
+
+export async function readEncored(r: Reader, d: Deployment, epoch: number, ids: number[]): Promise<Set<number>> {
+  if (ids.length === 0 || !encoresOn(d)) return new Set()
+  const res = await r.pub.multicall({
+    allowFailure: true,
+    contracts: ids.map(id => ({ address: d.choir, abi: choirAbi, functionName: 'encored', args: [BigInt(epoch), id] }) as const),
+  })
+  return new Set(ids.filter((_, i) => res[i].status === 'success' && res[i].result === true))
+}
+
 // ───────────── writes ─────────────
 
 const REVERTS: Record<string, string> = {
   NotYourChog: "That Chog isn't in your wallet.",
+  EncoreOff: 'Encores are not switched on here.',
+  SingFirst: 'Sing a note first. An encore is a second one.',
+  AlreadyEncored: 'This Chog already took its encore this round.',
+  BurnFailed: 'The $CHOG could not be burned. Check your balance and approval.',
   AlreadySang: 'This Chog already sang this round. Pick another, or wait for the next round.',
   OutOfRange: 'That cell is outside the staff.',
   EpochNotOver: 'This round is still being sung.',
@@ -119,7 +163,7 @@ export function explain(e: unknown): string {
   return e instanceof Error ? e.message : 'Something went wrong.'
 }
 
-async function send(r: Reader, s: Session, call: { address: Address; abi: typeof choirAbi | typeof nftAbi; functionName: string; args: unknown[] }) {
+async function send(r: Reader, s: Session, call: { address: Address; abi: typeof choirAbi | typeof nftAbi | typeof tokenAbi; functionName: string; args: unknown[] }) {
   // simulate first so a revert shows its reason instead of a vague wallet error
   const { request } = await r.pub.simulateContract({ ...(call as object), account: s.account } as never)
   const hash = await s.client.writeContract(request as never)
@@ -136,3 +180,12 @@ export const placeNote = (r: Reader, s: Session, d: Deployment, id: number, step
 
 export const sealRound = (r: Reader, s: Session, d: Deployment, epoch: number) =>
   send(r, s, { address: d.choir, abi: choirAbi, functionName: 'seal', args: [BigInt(epoch)] })
+
+export const encoreNote = (r: Reader, s: Session, d: Deployment, id: number, step: number, pitch: number) =>
+  send(r, s, { address: d.choir, abi: choirAbi, functionName: 'encore', args: [id, step, pitch] })
+
+export const approveToken = (r: Reader, s: Session, d: Deployment) =>
+  send(r, s, { address: d.token, abi: tokenAbi, functionName: 'approve', args: [d.choir, 2n ** 256n - 1n] })
+
+export const tokenFaucet = (r: Reader, s: Session, d: Deployment) =>
+  send(r, s, { address: d.token, abi: tokenAbi, functionName: 'faucet', args: [] })

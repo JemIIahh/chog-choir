@@ -1,5 +1,7 @@
 import { hzOf, midiFor } from '../lib/music'
 import type { Note, Song } from '../lib/share'
+import { scheduleBand } from './band'
+import { stepSeconds } from './timing'
 import { hash, type VoiceSpec } from './voice'
 
 // Adult-ish formant frequencies (Hz) for AH EH EE OH OO, and how loud/wide each band is.
@@ -306,10 +308,11 @@ export function notesAtStep(notes: Note[], step: number): Note[] {
 
 export type SpecOf = (id: number) => VoiceSpec
 
-export const stepSeconds = (tempo: number) => 60 / tempo / 2
+export { stepSeconds }
 const NOTE_STEPS = 1.9
 
 export function scheduleStep(ctx: BaseAudioContext, bus: Bus, song: Song, specOf: SpecOf, step: number, time: number) {
+  scheduleBand(ctx, bus, song, step, time)
   const dur = stepSeconds(song.tempo) * NOTE_STEPS
   const here = notesAtStep(song.notes, step)
   const vel = Math.max(0.28, Math.min(1, 1 / Math.sqrt(Math.max(1, here.length / 3.5))))

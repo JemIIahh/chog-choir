@@ -1,6 +1,7 @@
 import { midiFor, STEPS } from '../lib/music'
 import type { Song } from '../lib/share'
-import { createBus, playNote, scheduleStep, stepSeconds, type Bus, type SpecOf } from './synth'
+import { createBus, playNote, scheduleStep, type Bus, type SpecOf } from './synth'
+import { stepSeconds } from './timing'
 import type { VoiceSpec } from './voice'
 
 const LOOKAHEAD = 0.18 // seconds of audio scheduled ahead of the clock

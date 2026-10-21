@@ -4,17 +4,20 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {ChogChoir} from "../src/ChogChoir.sol";
 import {ChogReplica} from "../src/ChogReplica.sol";
+import {ChogToken} from "../src/ChogToken.sol";
 
 contract ChogChoirTest is Test {
     ChogReplica nft;
     ChogChoir choir;
+    ChogToken token;
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
     uint64 constant EPOCH = 1 hours;
 
     function setUp() public {
         nft = new ChogReplica("ipfs://base/");
-        choir = new ChogChoir(address(nft), EPOCH);
+        token = new ChogToken();
+        choir = new ChogChoir(address(nft), EPOCH, address(token), 100 ether);
         vm.prank(alice);
         nft.claim(1);
         vm.prank(alice);
@@ -161,5 +164,139 @@ contract ChogChoirTest is Test {
         nft.claim(1970);
         vm.expectRevert(); // already claimed by alice
         nft.claim(1);
+    }
+
+    // ───────────── streaks, totals, loft ─────────────
+
+    function test_streakCountsConsecutiveRounds() public {
+        for (uint256 r = 0; r < 3; r++) {
+            vm.prank(alice);
+            choir.place(1, 0, 0);
+            vm.warp(block.timestamp + EPOCH);
+        }
+        (uint32 total, uint32 last, uint16 streak, uint16 best) = choir.stats(1);
+        assertEq(total, 3);
+        assertEq(last, 3); // last sang in round index 2, stored +1
+        assertEq(streak, 3);
+        assertEq(best, 3);
+    }
+
+    function test_missingARoundBreaksTheStreakButKeepsTheBest() public {
+        vm.prank(alice);
+        choir.place(1, 0, 0); // round 0
+        vm.warp(block.timestamp + EPOCH);
+        vm.prank(alice);
+        choir.place(1, 0, 0); // round 1, streak 2
+        vm.warp(block.timestamp + 2 * EPOCH); // skip round 2
+        vm.prank(alice);
+        choir.place(1, 0, 0); // round 3
+        (uint32 total,, uint16 streak, uint16 best) = choir.stats(1);
+        assertEq(total, 3);
+        assertEq(streak, 1);
+        assertEq(best, 2);
+    }
+
+    function test_collectiveCounters() public {
+        vm.prank(alice);
+        choir.place(1, 0, 0);
+        vm.prank(alice);
+        choir.place(2, 1, 1);
+        vm.prank(bob);
+        choir.place(3, 2, 2);
+        vm.warp(block.timestamp + EPOCH);
+        vm.prank(alice);
+        choir.place(1, 0, 0); // same Chog again: a voice, not a new singer
+        assertEq(choir.singers(), 3);
+        assertEq(choir.voices(), 4);
+    }
+
+    function test_loftReadsARange() public {
+        vm.prank(alice);
+        choir.place(2, 0, 0);
+        ChogChoir.Stat[] memory s = choir.loft(1, 3);
+        assertEq(s.length, 3);
+        assertEq(s[0].total, 0); // id 1
+        assertEq(s[1].total, 1); // id 2
+        assertEq(s[2].total, 0); // id 3
+    }
+
+    // ───────────── encores ─────────────
+
+    function _fund(address who) internal {
+        vm.startPrank(who);
+        token.faucet();
+        token.approve(address(choir), type(uint256).max);
+        vm.stopPrank();
+    }
+
+    function test_encoreBurnsChogForASecondNote() public {
+        _fund(alice);
+        vm.startPrank(alice);
+        choir.place(1, 0, 0);
+        choir.encore(1, 8, 4);
+        vm.stopPrank();
+        assertEq(choir.noteCount(0), 2);
+        assertEq(token.balanceOf(choir.DEAD()), 100 ether);
+        assertEq(token.balanceOf(alice), 900 ether);
+        assertTrue(choir.encored(0, 1));
+        assertEq(choir.voices(), 2);
+        // an encore is not a new singer and does not change the streak
+        (uint32 total,, uint16 streak,) = choir.stats(1);
+        assertEq(total, 1);
+        assertEq(streak, 1);
+    }
+
+    function test_encoreNeedsASongFirst() public {
+        _fund(alice);
+        vm.prank(alice);
+        vm.expectRevert(ChogChoir.SingFirst.selector);
+        choir.encore(1, 0, 0);
+    }
+
+    function test_onlyOneEncorePerRound() public {
+        _fund(alice);
+        vm.startPrank(alice);
+        choir.place(1, 0, 0);
+        choir.encore(1, 1, 1);
+        vm.expectRevert(ChogChoir.AlreadyEncored.selector);
+        choir.encore(1, 2, 2);
+        vm.stopPrank();
+    }
+
+    function test_encoreIsOwnerOnlyAndNeedsFunds() public {
+        _fund(alice);
+        vm.prank(alice);
+        choir.place(1, 0, 0);
+        _fund(bob);
+        vm.prank(bob);
+        vm.expectRevert(ChogChoir.NotYourChog.selector);
+        choir.encore(1, 1, 1);
+        // alice spends her tokens elsewhere, then cannot pay
+        vm.startPrank(alice);
+        token.transfer(bob, 1000 ether);
+        vm.expectRevert(); // ERC20InsufficientBalance
+        choir.encore(1, 1, 1);
+        vm.stopPrank();
+        assertFalse(choir.encored(0, 1));
+    }
+
+    function test_encoreCanBeSwitchedOff() public {
+        ChogChoir plain = new ChogChoir(address(nft), EPOCH, address(0), 0);
+        vm.startPrank(alice);
+        plain.place(1, 0, 0);
+        vm.expectRevert(ChogChoir.EncoreOff.selector);
+        plain.encore(1, 1, 1);
+        vm.stopPrank();
+    }
+
+    function test_sealCoversEncoreNotes() public {
+        _fund(alice);
+        vm.startPrank(alice);
+        choir.place(1, 0, 0);
+        choir.encore(1, 8, 4);
+        vm.stopPrank();
+        vm.warp(block.timestamp + EPOCH);
+        choir.seal(0);
+        assertEq(choir.notesOf(0).length, 2);
     }
 }

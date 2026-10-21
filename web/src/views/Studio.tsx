@@ -69,7 +69,7 @@ export function Studio({ chogs, byId, player }: { chogs: Chog[]; byId: Map<numbe
   const surprise = useCallback(() => {
     const seed = (Math.random() * 1e9) | 0
     const k = epochKey(seed)
-    setSong(s => bandSong(chogs, seed, { tempo: s.tempo, root: k.root, mode: k.mode, space: s.space, bright: s.bright }))
+    setSong(s => bandSong(chogs, seed, { tempo: s.tempo, root: k.root, mode: k.mode, space: s.space, bright: s.bright, beat: s.beat || 1 }))
     setBrushId(null)
     setHeard(true)
     if (!player.playing) void player.toggle()

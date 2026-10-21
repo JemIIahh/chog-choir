@@ -22,15 +22,23 @@ export const monadMainnet = defineChain({
   contracts: { multicall3: { address: MULTICALL3 } },
 })
 
-export type Deployment = { choir: Address; nft: Address; epochSeconds: number }
+/** token is the $CHOG that encores burn (0x0 = encores off); encorePrice is in its smallest unit */
+export type Deployment = { choir: Address; nft: Address; token: Address; encorePrice: string; epochSeconds: number; faucet?: boolean }
 
 export type Target = { chain: Chain; deployment: Deployment | null }
+export type Net = 'main' | 'test'
 
 /**
- * Where Today's Choir lives. Production points at the committed Monad testnet deployment.
- * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points the same UI at a local chain for tests.
+ * Where the Choir lives. `main` is Monad mainnet with the real Chog Genesis collection; `test` is Monad testnet with
+ * free replica Chogs, so anyone can try it. Both read from the committed deployments.json.
+ * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points `test` at a local chain for tests.
  */
-export function resolveTarget(): Target {
+export function resolveTargets(): Record<Net, Target> {
+  const all = deployments as Record<string, Deployment | null>
+  const out: Record<Net, Target> = {
+    main: { chain: monadMainnet, deployment: all['143'] ?? null },
+    test: { chain: monadTestnet, deployment: all['10143'] ?? null },
+  }
   if (import.meta.env.DEV) {
     const q = new URLSearchParams(location.search)
     const rpc = q.get('rpc')
@@ -45,9 +53,12 @@ export function resolveTarget(): Target {
         rpcUrls: { default: { http: [rpc] } },
         contracts: { multicall3: { address: MULTICALL3 } },
       })
-      return { chain, deployment: { choir: choir as Address, nft: nft as Address, epochSeconds: Number(q.get('epoch') ?? 3600) } }
+      const token = (q.get('token') ?? '0x0000000000000000000000000000000000000000') as Address
+      out.test = { chain, deployment: { choir: choir as Address, nft: nft as Address, token, encorePrice: q.get('price') ?? '1000000000000000000000', epochSeconds: Number(q.get('epoch') ?? 3600), faucet: true } }
+      out.main = { chain: monadMainnet, deployment: null }
     }
   }
-  const d = (deployments as Record<string, Deployment | null>)['10143']
-  return { chain: monadTestnet, deployment: d }
+  return out
 }
+
+export const defaultNet = (t: Record<Net, Target>): Net => (t.main.deployment ? 'main' : 'test')

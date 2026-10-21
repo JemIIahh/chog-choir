@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] })
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } })
+const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()) })
+await p.goto('http://127.0.0.1:5188/', { waitUntil: 'networkidle' }); await p.waitForSelector('.hero')
+await p.screenshot({ path: '/tmp/songs-1.png' })
+await p.fill('.finder-in input', '1462'); await p.click('button:has-text("Play its song")'); await p.waitForTimeout(2200)
+await p.screenshot({ path: '/tmp/songs-2.png' })
+console.log('hash', await p.evaluate(() => location.hash), 'h2', await p.textContent('.hero-info h2'), '| errors:', errs.length ? errs.join('|') : 'none')
+await b.close()

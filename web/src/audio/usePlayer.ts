@@ -8,15 +8,19 @@ import type { Song } from '../lib/share'
 export function usePlayer(byId: Map<number, Chog>) {
   const engine = useRef<ChoirEngine | null>(null)
   const staff = useRef<StaffHandle>(null)
-  const song = useRef<Song>({ tempo: 88, root: 9, mode: 0, space: 46, bright: 52, notes: [] })
+  const song = useRef<Song>({ tempo: 88, root: 9, mode: 0, space: 46, bright: 52, beat: 1, notes: [] })
   const [playing, setPlaying] = useState(false)
+  const listeners = useRef(new Set<(e: { step: number; delay: number }) => void>())
 
   const specOf = useCallback((id: number) => byId.get(id)!.spec, [byId])
 
   const get = useCallback(() => {
     if (!engine.current) {
       const e = new ChoirEngine(song.current, specOf)
-      e.onStep = ({ step, delay }) => staff.current?.hit(step, delay)
+      e.onStep = ev => {
+        staff.current?.hit(ev.step, ev.delay)
+        listeners.current.forEach(l => l(ev))
+      }
       engine.current = e
     }
     return engine.current
@@ -45,7 +49,12 @@ export function usePlayer(byId: Map<number, Chog>) {
   useEffect(() => () => engine.current?.dispose(), [])
 
   const current = useCallback(() => song.current, [])
-  return { staff, playing, toggle, stop, hear, bind, specOf, getEngine: get, current }
+  /** hear every step as it lands, for visuals outside the staff */
+  const onStep = useCallback((fn: (e: { step: number; delay: number }) => void) => {
+    listeners.current.add(fn)
+    return () => { listeners.current.delete(fn) }
+  }, [])
+  return { staff, playing, toggle, stop, hear, bind, specOf, getEngine: get, current, onStep }
 }
 
 export type Player = ReturnType<typeof usePlayer>

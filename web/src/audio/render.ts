@@ -1,6 +1,7 @@
 import { STEPS } from '../lib/music'
 import type { Song } from '../lib/share'
-import { createBus, scheduleStep, stepSeconds, type SpecOf } from './synth'
+import { createBus, scheduleStep, type SpecOf } from './synth'
+import { stepSeconds } from './timing'
 
 const RATE = 44100
 

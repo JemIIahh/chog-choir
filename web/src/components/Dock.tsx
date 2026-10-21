@@ -1,3 +1,4 @@
+import { BEATS } from '../audio/band'
 import { MODES, ROOTS } from '../lib/music'
 import { TEMPO_MAX, TEMPO_MIN, type Song } from '../lib/share'
 
@@ -40,13 +41,16 @@ export function Dock({ song, playing, onToggle, onChange, keyLocked, children }:
       <Slider label="Brightness" value={song.bright} min={0} max={100} onChange={bright => onChange({ bright })} />
 
       <div className="keypick">
-        <span>Key</span>
+        <span>Key and beat</span>
         <div className="key-row">
           <select value={song.root} disabled={keyLocked} onChange={e => onChange({ root: Number(e.target.value) })} aria-label="Key">
             {ROOTS.map((r, i) => <option key={r} value={i}>{r}</option>)}
           </select>
           <select value={song.mode} disabled={keyLocked} onChange={e => onChange({ mode: Number(e.target.value) })} aria-label="Scale">
             {MODES.map((m, i) => <option key={m.name} value={i}>{m.name.toLowerCase()}</option>)}
+          </select>
+          <select value={song.beat} onChange={e => onChange({ beat: Number(e.target.value) })} aria-label="Beat">
+            {BEATS.map((b, i) => <option key={b} value={i}>{b.toLowerCase()}</option>)}
           </select>
         </div>
       </div>

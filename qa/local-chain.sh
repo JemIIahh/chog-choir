@@ -1,6 +1,6 @@
 #!/bin/sh
 # Fresh local chain for the end-to-end test: anvil + Multicall3 (copied from Monad) + the two contracts.
-# prints: NFT CHOIR
+# prints: NFT CHOIR TOKEN
 set -e
 pkill -f "anvil --port 8545" 2>/dev/null || true
 sleep 1
@@ -14,5 +14,6 @@ cd "$(dirname "$0")/../contracts"
 OUT=$(DEPLOYER_PRIVATE_KEY=$K0 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast 2>&1)
 NFT=$(echo "$OUT" | awk '/^ +NFT /{print $2}')
 CHOIR=$(echo "$OUT" | awk '/^ +CHOIR /{print $2}')
+TOKEN=$(echo "$OUT" | awk '/^ +TOKEN /{print $2}')
 sleep 3
-echo "$NFT $CHOIR"
+echo "$NFT $CHOIR $TOKEN"

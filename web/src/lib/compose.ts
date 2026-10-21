@@ -3,7 +3,7 @@ import type { Chog } from '../data/chogs'
 import { PITCHES, STEPS } from './music'
 import { MAX_NOTES, type Note, type Song } from './share'
 
-export const DEFAULT_SONG: Omit<Song, 'notes'> = { tempo: 88, root: 9, mode: 0, space: 46, bright: 52 }
+export const DEFAULT_SONG: Omit<Song, 'notes'> = { tempo: 88, root: 9, mode: 0, space: 46, bright: 52, beat: 1 }
 
 function rng(seed: number) {
   let s = seed >>> 0 || 1
