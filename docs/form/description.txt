@@ -38,7 +38,7 @@ HOW IT RUNS
 There is no backend of our own: everything is the browser plus the chain. Each round's key and mode are derived on-chain from the round number, so everyone sings in the same key.
 
 HOW IT WAS CHECKED
-38 contract tests and 80+ unit tests. A browser test of the whole product, run against a local chain and against real Monad testnet with real transactions. A rehearsal of the mainnet deployment against the real collection and the real token: the biggest real holder (73 Chogs) singing in one batch, and a real burn lowering the $CHOG supply by exactly the price.
+38 contract tests and 80+ unit tests. A browser test of the whole product, run against a local chain and against real Monad testnet with real transactions. A rehearsal of the mainnet deployment against the real collection and the real token: the biggest real holder (73 Chogs) singing in one batch, and a real burn lowering the $CHOG supply by exactly the price. After the mainnet deploy, the contract's settings were read back from the chain (real collection, real $CHOG, one-day rounds, 1,000 $CHOG encore) and the deployed code was compared with the compiled contract: identical.
 
 HONEST LIMITS
 The audio was measured offline (pitch, vowel formants, loudness and clipping across 200 songs). On testnet the Chogs are free copies, and the notes in the current testnet rounds come from the project's own wallet so the choir does not sound empty; those transactions are on the explorer and are not user activity. The mainnet choir starts empty and fills only as holders sing.

@@ -52,7 +52,7 @@ Songs and Studio are open to everyone on purpose, so anyone can hear a Chog befo
 
 ## $CHOG
 
-Encores burn $CHOG (1,000 per encore, read from the contract) with a real `burn()`: the choir pulls the tokens in and burns them, so total supply falls by exactly that amount. I rehearsed this against the real collection and the real $CHOG on a fork of Monad mainnet. [MAINNET: On mainnet this is the real token, `0x350035555E10d9AfAF1566AaebfCeD5BA6C27777`.] On testnet a free stand-in token with a faucet is used so judges can test the burn.
+Encores burn $CHOG (1,000 per encore, read from the contract) with a real `burn()`: the choir pulls the tokens in and burns them, so total supply falls by exactly that amount. I rehearsed this against the real collection and the real $CHOG on a fork of Monad mainnet before deploying. On mainnet this is the real token, `0x350035555E10d9AfAF1566AaebfCeD5BA6C27777`. On testnet a free stand-in token with a faucet is used so judges can test the burn.
 
 ## Demo video (max 3 minutes)
 
@@ -64,25 +64,36 @@ https://chog-choir.vercel.app (use this address, not a long `…-seunjeremiah200
 
 ## Judge access instructions (max 8,000 characters)
 
-You can listen to everything without logging in or connecting a wallet. A wallet is only needed to sing in The Choir; "Connect wallet" (top right) connects any browser wallet, or email or Google.
+Open https://chog-choir.vercel.app. You can listen to everything without logging in. A wallet is only needed to sing in The Choir (steps 3 and 5): press "Connect wallet" at the top right and use any browser wallet, or sign in with email or Google and one is created for you. The Choir comes in two versions: a free one on Monad testnet (step 3, it opens first, no Chog needed) and the real one on Monad mainnet (step 5, a real Chog is needed).
 
-1. Open the app. On **Songs**, type a Chog number (try 1462) and press Play. Try **Duet with Chog #** (88), and **Hum a tune** (allow the microphone, hum "ooo" for a few seconds when it says so). Tap Save clip or Save poster to see the exports.
-2. **Studio**: pick a Chog, tap the staff to place its note, change the beat and key, press Play, copy the link.
-3. **The Choir** (needs a wallet on Monad testnet, chain 10143, and a little free testnet MON for gas):
-   1. Get testnet MON from the [Monad faucet](https://faucet.monad.xyz) or the [Alchemy faucet](https://www.alchemy.com/faucets/monad-testnet) (no sign-up).
-   2. Choose "Try it free on testnet", connect your wallet, and claim a free Chog.
-   3. Tap a cell on the staff to place its note and press Sing. Watch your Chog light up in the loft.
-   4. Get free test $CHOG, then take an encore: it burns 1,000 test $CHOG and adds a second voice. The "$CHOG burned" counter goes up.
-   5. Claim two or three Chogs and press "Sing with all": they all sing in one transaction.
-   6. Move the **What if more Chogs sing?** slider to hear the band fill out (a preview, never sent to the chain).
-4. **Records**: sealed rounds play back, and **Play all** plays every round in order. Anyone can seal a finished round.
-5. Choose "Real Chogs on Monad" to sing with a real Chog. This needs a Chog in your wallet and a little MON.
+1. SONGS
+Type a Chog number (try 1462) and press Play. Try "Duet with Chog #" with 88 and press Sing together. Press "Hum a tune", allow the microphone, wait for the count-in, then hum "ooo" or "la" with a few different notes for about five seconds: the Chog sings your tune back. Save clip, Save poster and Copy link show the exports. If you connect a wallet here, it shows the Chogs you own.
 
-Without a wallet you can still watch the live choir fill up and play every round.
+2. STUDIO
+Pick a Chog, tap the staff to place its note, change the beat and key, press Play, and copy the link.
+
+3. THE CHOIR, FREE VERSION (Monad testnet, chain 10143)
+This is what The Choir opens on, so you can try everything without owning a Chog.
+a. Get free testnet MON for gas from https://faucet.monad.xyz or the Alchemy Monad testnet faucet (no sign-up needed).
+b. Press "Connect wallet". Use any browser wallet, or choose "Email or Google": a wallet is created for you, and Privy asks you to confirm each transaction. A new wallet starts with no MON, so press "Copy my address" and send that address the testnet MON from the faucet.
+c. Press "Claim a free Chog" (a free copy of the real collection). Pick it, tap a cell on the staff, and press Sing. Your Chog lights up in the loft and the voice count goes up.
+d. Claim two or three Chogs and press "Sing with all": they all sing in one transaction.
+e. Press "Get 1,000 test $CHOG", tap a cell, and press the encore button. It burns 1,000 test $CHOG, adds a second voice, and the "$CHOG burned" counter goes up.
+f. Drag "What if more Chogs sing?" to hear the band fill out. It is a preview and is never sent to the chain.
+Rounds last 30 minutes on testnet.
+
+4. RECORDS
+When a round ends anyone can press "Seal it". Sealed rounds play back, and "Play all" plays every sealed round in order.
+
+5. THE REAL VERSION (Monad mainnet, chain 143)
+Press "Real Chogs on Monad" at the top of The Choir, or open https://chog-choir.vercel.app/?net=main#choir. This is the live version. The Choir contract is 0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0 (https://monadvision.com/address/0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0), and for every note it checks ownerOf on the real Chog Genesis (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763). Singing here needs a real Chog in your connected wallet and a little MON for gas (a note costs about 0.02 MON). An encore burns 1,000 real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). Rounds are one day long and turn over at 00:00 UTC.
+This choir starts empty and fills only as real Chog holders sing, so you may see an empty loft ("Nobody has sung this round. Be the first."). If you do not hold a Chog you can still connect a wallet (the page says it holds no Chog Genesis and offers the free version) and drag "What if more Chogs sing?" to hear what the round becomes. To sing without owning a Chog, use the free version in step 3.
+
+The code is at https://github.com/JemIIahh/chog-choir . Its README lists every contract address and how each part was tested.
 
 ## Tech stack
 
-Vite, React, TypeScript, viem. Web Audio: formant synthesis, a small drum and bass band, offline rendering for measurement. Solidity 0.8.28, Foundry, OpenZeppelin v5. Monad testnet and mainnet. Canvas for posters and clip export (MediaRecorder). 38 contract tests, 60+ unit tests, an end-to-end test in a real browser that runs against a local chain and against real Monad testnet (real transactions, real waits between rounds), a rehearsal of the mainnet deployment on a fork against the real collection and token, and a 200-song audio sweep.
+Vite, React, TypeScript, viem. Web Audio: formant synthesis, a small drum and bass band, offline rendering for measurement. Solidity 0.8.28, Foundry, OpenZeppelin v5. Monad testnet and mainnet. Canvas for posters and clip export (MediaRecorder). 38 contract tests, 60+ unit tests, an end-to-end test in a real browser that runs against a local chain and against real Monad testnet (real transactions, real waits between rounds), a rehearsal of the mainnet deployment on a fork against the real collection and token (then, after deploying, the settings read back from the chain and the deployed code compared with the compiled contract: identical), and a 200-song audio sweep.
 
 ## GitHub repo
 

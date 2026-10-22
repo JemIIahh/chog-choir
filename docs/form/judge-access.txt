@@ -1,4 +1,4 @@
-Open https://chog-choir.vercel.app. You can listen to everything without logging in. A wallet is only needed to sing in The Choir (steps 3 and 5): press "Connect wallet" at the top right and use any browser wallet, or sign in with email or Google and one is created for you.
+Open https://chog-choir.vercel.app. You can listen to everything without logging in. A wallet is only needed to sing in The Choir (steps 3 and 5): press "Connect wallet" at the top right and use any browser wallet, or sign in with email or Google and one is created for you. The Choir comes in two versions: a free one on Monad testnet (step 3, it opens first, no Chog needed) and the real one on Monad mainnet (step 5, a real Chog is needed).
 
 1. SONGS
 Type a Chog number (try 1462) and press Play. Try "Duet with Chog #" with 88 and press Sing together. Press "Hum a tune", allow the microphone, wait for the count-in, then hum "ooo" or "la" with a few different notes for about five seconds: the Chog sings your tune back. Save clip, Save poster and Copy link show the exports. If you connect a wallet here, it shows the Chogs you own.
@@ -20,6 +20,7 @@ Rounds last 30 minutes on testnet.
 When a round ends anyone can press "Seal it". Sealed rounds play back, and "Play all" plays every sealed round in order.
 
 5. THE REAL VERSION (Monad mainnet, chain 143)
-Press "Real Chogs on Monad" at the top of The Choir. Singing here needs a real Chog Genesis in your connected wallet (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763) and a little MON, and an encore burns real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). The mainnet Choir contract is 0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0. If you do not hold a Chog you can still watch the round, play it, and use the preview slider. Rounds are one day long and turn over at 00:00 UTC.
+Press "Real Chogs on Monad" at the top of The Choir, or open https://chog-choir.vercel.app/?net=main#choir. This is the live version. The Choir contract is 0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0 (https://monadvision.com/address/0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0), and for every note it checks ownerOf on the real Chog Genesis (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763). Singing here needs a real Chog in your connected wallet and a little MON for gas (a note costs about 0.02 MON). An encore burns 1,000 real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). Rounds are one day long and turn over at 00:00 UTC.
+This choir starts empty and fills only as real Chog holders sing, so you may see an empty loft ("Nobody has sung this round. Be the first."). If you do not hold a Chog you can still connect a wallet (the page says it holds no Chog Genesis and offers the free version) and drag "What if more Chogs sing?" to hear what the round becomes. To sing without owning a Chog, use the free version in step 3.
 
 The code is at https://github.com/JemIIahh/chog-choir . Its README lists every contract address and how each part was tested.
