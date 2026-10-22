@@ -64,7 +64,7 @@ cd ../qa && pnpm install && ./run-e2e.sh     # fresh local chain + the whole pro
 node fork-rehearsal.mjs                      # the mainnet deployment rehearsed on a fork, against the REAL Chog Genesis and $CHOG
 node mainnet-fork-ui.mjs                     # the same, through the page: the biggest real holder (73 Chogs) sings in 3 batches and takes an encore with real $CHOG
 node smoke-prod.mjs                          # the production build as a judge loads it (run `pnpm build` first)
-MODE=testnet EPOCH=300 node e2e.mjs <nft> <choir> <token>   # the same browser test on real Monad testnet (needs a 5-minute-round deployment and the deployer key in contracts/.env)
+MODE=testnet EPOCH=300 node e2e.mjs <nft> <choir> <token>   # the same browser test on real Monad testnet (needs a 5-minute-round deployment and the testnet deployer key in contracts/.env.testnet)
 node onboarding.mjs; node theme.mjs; node wallet.mjs   # the welcome, dark/light mode, the wallet button
 ```
 

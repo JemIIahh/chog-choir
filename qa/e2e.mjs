@@ -35,7 +35,7 @@ let account = { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' }
 let signer = null
 let funder = null
 if (TEST) {
-  const env = Object.fromEntries(fs.readFileSync(path.join(here, '../contracts/.env'), 'utf8').split('\n').filter(l => l.includes('=') && !l.startsWith('#')).map(l => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
+  const env = Object.fromEntries(fs.readFileSync(path.join(here, '../contracts/.env.testnet'), 'utf8').split('\n').filter(l => l.includes('=') && !l.startsWith('#')).map(l => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
   funder = createWalletClient({ account: privateKeyToAccount(env.DEPLOYER_PRIVATE_KEY), chain, transport: http(RPC) })
   account = privateKeyToAccount(generatePrivateKey())
   signer = createWalletClient({ account, chain, transport: http(RPC) })

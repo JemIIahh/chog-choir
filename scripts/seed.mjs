@@ -15,7 +15,7 @@ import { voiceFor } from '../web/src/audio/voice.ts'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const arg = k => (process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : undefined)
 let env = {}
-try { env = Object.fromEntries(fs.readFileSync(path.join(here, '../contracts/.env'), 'utf8').split('\n').filter(l => l.includes('=') && !l.startsWith('#')).map(l => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])) } catch { /* flags may supply everything */ }
+try { env = Object.fromEntries(fs.readFileSync(path.join(here, '../contracts/.env.testnet'), 'utf8').split('\n').filter(l => l.includes('=') && !l.startsWith('#')).map(l => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])) } catch { /* flags may supply everything */ }
 // flags let the same script seed a local chain for testing: --rpc --key --chain --choir --nft
 const dep = arg('--choir') ? { choir: arg('--choir'), nft: arg('--nft') } : JSON.parse(fs.readFileSync(path.join(here, '../web/src/chain/deployments.json'), 'utf8'))['10143']
 if (!dep) throw new Error('web/src/chain/deployments.json has no testnet deployment yet')

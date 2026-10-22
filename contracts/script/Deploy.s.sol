@@ -6,7 +6,8 @@ import {ChogChoir} from "../src/ChogChoir.sol";
 import {ChogReplica} from "../src/ChogReplica.sol";
 import {ChogToken} from "../src/ChogToken.sol";
 
-/// forge script script/Deploy.s.sol --rpc-url $RPC --broadcast
+/// forge script script/Deploy.s.sol --rpc-url $RPC --broadcast            (with DEPLOYER_PRIVATE_KEY set)
+/// forge script script/Deploy.s.sol --rpc-url $RPC --account <name> --broadcast   (an encrypted keystore, or --ledger)
 ///   NFT unset    -> also deploys the free-to-claim replica (testnet / local)
 ///   NFT=0xc96d.. -> points the choir at the real Chog Genesis collection (mainnet)
 ///   TOKEN unset  -> also deploys the free stand-in token (testnet / local)
@@ -25,7 +26,10 @@ contract Deploy is Script {
     string constant META_BASE = "ipfs://bafybeid4ybujnscdipkno7ps5utqelp5ry5ryreqhay3zhgk3a6x4jruqu/";
 
     function run() external {
-        uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        // Signing: with DEPLOYER_PRIVATE_KEY set the script signs with it. Without it, forge signs with whatever is passed on the
+        // command line (--account <keystore name>, --ledger, --trezor, or --sender with --unlocked), so a real wallet's key never
+        // has to be written into a file or an environment variable.
+        uint256 pk = vm.envOr("DEPLOYER_PRIVATE_KEY", uint256(0));
         uint64 epochSeconds = uint64(vm.envOr("EPOCH_SECONDS", uint256(3600)));
         address nft = vm.envOr("NFT", address(0));
         bool deployToken = !vm.envExists("TOKEN");
@@ -38,7 +42,8 @@ contract Deploy is Script {
             require(vm.envExists("EPOCH_SECONDS"), "mainnet: set EPOCH_SECONDS on purpose");
         }
 
-        vm.startBroadcast(pk);
+        if (pk != 0) vm.startBroadcast(pk);
+        else vm.startBroadcast();
         if (nft == address(0)) nft = address(new ChogReplica(META_BASE));
         if (deployToken) token = address(new ChogToken());
         ChogChoir choir = new ChogChoir(nft, epochSeconds, token, price);
