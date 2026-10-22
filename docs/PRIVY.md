@@ -18,6 +18,12 @@ An optional second way in for people who have no crypto wallet: they sign in wit
 
 "Connect wallet" now has an **Email or Google** row on top. Choosing it opens Privy's own sign-in window; when it finishes, the account shows up in the header like any other wallet, remembered across reloads, and **Disconnect** also signs out of Privy. Every transaction (singing, claiming, encores) asks for a confirmation in Privy's window.
 
+## Sessions on a shared computer
+
+- **Disconnect** signs out of Privy (and waits for that to finish before closing anything). Replacing the email wallet with a browser wallet signs out too.
+- Closing the tab without disconnecting keeps the session, on purpose, so the wallet is back after a reload (the same as a browser wallet that stays connected).
+- Choosing **Email or Google** always starts a fresh sign-in: if an older session is still on the browser it is ended first, so the wallet is never handed to someone who did not just sign in.
+
 ## Gas
 
 An embedded wallet starts with **0 MON**, and singing is a transaction. On testnet the page already tells a wallet with no MON where to get some and has a **Copy my address** button, but a first-time visitor has to leave the page for a faucet. Options if that matters for judges:

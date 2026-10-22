@@ -29,3 +29,16 @@ export const privyMessages = {
   noWallet: 'Signed in, but the wallet could not be created. Try again.',
   failed: 'Could not sign in. Try again.',
 } as const
+
+/**
+ * What to do once Privy is ready.
+ *  - login: the visitor asked to sign in. If a session is already there (someone else's, or an old one) it is ended first,
+ *    so choosing "Email or Google" always means a fresh sign-in and never hands over a wallet nobody just signed in to.
+ *  - restore: the page reloaded and the visitor never disconnected; the session they had may be resumed.
+ */
+export type Plan = 'login' | 'relogin' | 'resume' | 'gone'
+export const planFor = (mode: 'login' | 'restore', authenticated: boolean): Plan =>
+  mode === 'login' ? (authenticated ? 'relogin' : 'login') : authenticated ? 'resume' : 'gone'
+
+/** A wallet is handed to the app only for a session the visitor just signed in to, or one they are resuming after a reload. */
+export const mayHandOver = (mode: 'login' | 'restore', signedInJustNow: boolean): boolean => mode === 'restore' || signedInJustNow

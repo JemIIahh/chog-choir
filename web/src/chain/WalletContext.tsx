@@ -47,6 +47,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [privy, setPrivy] = useState<'login' | 'restore' | null>(() => (privyEnabled && last === PRIVY_ID ? 'restore' : null))
   const logoutRef = useRef<(() => Promise<void>) | null>(null)
   const waiting = useRef<((ok: boolean) => void) | null>(null)
+  /** sign out of Privy, and only then take its host off the page (unmounting first could cut the sign-out short) */
+  const endPrivy = useCallback(async () => {
+    try { await logoutRef.current?.() } catch { /* the session is dropped below either way */ }
+    logoutRef.current = null
+    setPrivy(null)
+  }, [])
 
   // find the wallets in this browser, and quietly pick up the one connected last time (no prompt)
   useEffect(() => {
@@ -67,9 +73,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connect = useCallback(async (w: Found) => {
     setBusy(true)
     setError(null)
-    setPrivy(null) // a browser wallet replaces any email wallet (its session stays, so it can be resumed later)
     try {
       const acc = await requestAccount(w)
+      // a browser wallet replaces an email wallet: end the email session too, so it cannot be picked up by whoever uses this browser next
+      await endPrivy()
       setFound(w)
       setAccount(acc)
       try { localStorage.setItem(KEY, id(w)) } catch { /* ignore */ }
@@ -80,14 +87,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setBusy(false)
     }
-  }, [])
+  }, [endPrivy])
 
   const disconnect = useCallback(() => {
-    if (found?.rdns === PRIVY_ID) void logoutRef.current?.().catch(() => undefined)
-    setPrivy(null)
     setFound(null); setAccount(null); setHeld(null); setError(null)
     try { localStorage.removeItem(KEY) } catch { /* ignore */ }
-  }, [found])
+    void endPrivy()
+  }, [endPrivy])
 
   // ── email or Google (Privy)
   const startPrivy = useCallback(() => new Promise<boolean>(resolve => {
