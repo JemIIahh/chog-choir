@@ -14,7 +14,7 @@ export function WalletChooser({ onDone }: { onDone?(): void }) {
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="6" width="17" height="12" rx="3" /><path d="M5 8.5l7 5 7-5" /></svg>
       </span>
       <span className="wtext">
-        <b>Email or Google</b>
+        <b>{privy.label}</b>
         <small>{busy && pending === 'email' ? 'Waiting for sign-in…' : 'No crypto wallet needed'}</small>
       </span>
       {busy && pending === 'email' ? <span className="spin" aria-hidden /> : (
@@ -37,7 +37,7 @@ export function WalletChooser({ onDone }: { onDone?(): void }) {
       <div className="wempty">
         <WalletIcon size={52} />
         <b>No wallet found in this browser</b>
-        <p>{email ? 'Use email or Google above, or install a wallet and reload this page. You can still listen to everything here.' : 'You can still listen to everything here. To sing, install a wallet, then reload this page.'}</p>
+        <p>{email ? 'Sign in with email above, or install a wallet and reload this page. You can still listen to everything here.' : 'You can still listen to everything here. To sing, install a wallet, then reload this page.'}</p>
         <div className="wget">
           <a className="btn small" href="https://metamask.io/download/" target="_blank" rel="noreferrer">Get MetaMask</a>
           <a className="btn small" href="https://rabby.io/" target="_blank" rel="noreferrer">Get Rabby</a>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cleanAppId, mayHandOver, planFor } from './privy'
+import { cleanAppId, isFreshSignIn, mayHandOver, ownsEmbedded, parseMethods, planFor } from './privy'
 
 describe('cleanAppId', () => {
   it('accepts a Privy app id and trims it', () => {
@@ -29,5 +29,48 @@ describe('mayHandOver: when a wallet may be given to the app', () => {
   })
   it('resumes without a new sign-in only after a reload', () => {
     expect(mayHandOver('restore', false)).toBe(true)
+  })
+})
+
+describe('isFreshSignIn: which Privy "sign-in complete" events count', () => {
+  it('ignores the event Privy fires at once for a session that was already there', () => {
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: true }, false)).toBe(false)
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: true }, true)).toBe(false)
+  })
+  it('ignores a sign-in this page did not start', () => {
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: false }, false)).toBe(false)
+  })
+  it('counts a sign-in this page started on a browser that was not signed in', () => {
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: false }, true)).toBe(true)
+  })
+})
+
+describe('ownsEmbedded: only the signed-in user\'s own wallet is handed over', () => {
+  const user = { linkedAccounts: [{ type: 'email', address: 'a@b.c' }, { type: 'wallet', walletClientType: 'privy', address: '0xAbC0000000000000000000000000000000000001' }, { type: 'wallet', walletClientType: 'metamask', address: '0xdef0000000000000000000000000000000000002' }] }
+  it('accepts the user\'s embedded wallet, whatever the letter case', () => {
+    expect(ownsEmbedded(user, '0xabc0000000000000000000000000000000000001')).toBe(true)
+  })
+  it('refuses a wallet that is not the user\'s: another person\'s stale entry, or an external wallet', () => {
+    expect(ownsEmbedded(user, '0x1110000000000000000000000000000000000009')).toBe(false)
+    expect(ownsEmbedded(user, '0xdef0000000000000000000000000000000000002')).toBe(false)
+  })
+  it('refuses everything when nobody is signed in', () => {
+    expect(ownsEmbedded(null, '0xabc')).toBe(false)
+    expect(ownsEmbedded(undefined, '0xabc')).toBe(false)
+    expect(ownsEmbedded({}, '0xabc')).toBe(false)
+  })
+})
+
+describe('parseMethods: which sign-in methods to offer', () => {
+  it('is email alone by default, because only methods switched on in the Privy dashboard work', () => {
+    for (const none of [undefined, '', '  ', 'sms', 'wallet', 7, null]) expect(parseMethods(none)).toEqual(['email'])
+  })
+  it('adds Google only when asked for it', () => {
+    expect(parseMethods('email,google')).toEqual(['email', 'google'])
+    expect(parseMethods(' Google , EMAIL ')).toEqual(['email', 'google'])
+    expect(parseMethods('google')).toEqual(['google'])
+  })
+  it('ignores anything it does not know, so a typo cannot ask Privy for a method that is not set up', () => {
+    expect(parseMethods('email,twitter,wallet,google,google')).toEqual(['email', 'google'])
   })
 })

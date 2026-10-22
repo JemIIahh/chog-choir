@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 import { explain, makeReader, readHeld } from './client'
 import { monadMainnet, REAL_CHOG } from './config'
 import { PrivyGate } from './PrivyGate'
-import { PRIVY_APP_ID, PRIVY_ID, privyEnabled, type PrivyFound } from './privy'
+import { PRIVY_APP_ID, PRIVY_ID, privyEnabled, privyLabel, type PrivyFound } from './privy'
 import { discoverWallets, requestAccount, sharedAccount, type Found } from './wallet'
 
 // One wallet connection for the whole app, shared by the header button, Songs, the welcome and the Choir.
@@ -29,7 +29,7 @@ type Ctx = {
   /** the wallet connected last time, if the visitor did not disconnect */
   last: string | null
   /** sign in with email or Google (Privy). Resolves true once the embedded wallet is connected. Absent unless configured. */
-  privy: { enabled: boolean; start(): Promise<boolean> }
+  privy: { enabled: boolean; label: string; start(): Promise<boolean> }
 }
 
 const Wallet = createContext<Ctx | null>(null)
@@ -136,7 +136,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => { live = false }
   }, [account])
 
-  const privyApi = useMemo(() => ({ enabled: privyEnabled, start: startPrivy }), [startPrivy])
+  const privyApi = useMemo(() => ({ enabled: privyEnabled, label: privyLabel, start: startPrivy }), [startPrivy])
   const value = useMemo(() => ({ wallets, found, account, held, busy, error, connect, disconnect, menuOpen, setMenuOpen, last, privy: privyApi }), [wallets, found, account, held, busy, error, connect, disconnect, menuOpen, last, privyApi])
   return (
     <Wallet.Provider value={value}>

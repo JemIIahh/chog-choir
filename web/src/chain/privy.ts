@@ -10,7 +10,17 @@ export const cleanAppId = (raw: unknown): string | null => {
   return /^[a-z0-9]{20,40}$/i.test(v) ? v : null // Privy app ids are 25 letters and digits
 }
 
+/** Which sign-in methods to offer. Only methods that are also switched on in the Privy dashboard work, so the default is email alone. */
+export type Method = 'email' | 'google'
+export const parseMethods = (raw: unknown): Method[] => {
+  const asked = typeof raw === 'string' ? raw.split(',').map(x => x.trim().toLowerCase()) : []
+  const ok = (['email', 'google'] as const).filter(m => asked.includes(m))
+  return ok.length ? ok : ['email']
+}
+
 export const PRIVY_APP_ID = cleanAppId(import.meta.env.VITE_PRIVY_APP_ID)
+export const PRIVY_METHODS = parseMethods(import.meta.env.VITE_PRIVY_METHODS)
+export const privyLabel = PRIVY_METHODS.includes('google') ? 'Email or Google' : 'Sign in with email'
 export const privyEnabled = PRIVY_APP_ID !== null
 
 /** how the embedded wallet is told apart from browser wallets (stored as "the wallet used last time") */
@@ -42,3 +52,16 @@ export const planFor = (mode: 'login' | 'restore', authenticated: boolean): Plan
 
 /** A wallet is handed to the app only for a session the visitor just signed in to, or one they are resuming after a reload. */
 export const mayHandOver = (mode: 'login' | 'restore', signedInJustNow: boolean): boolean => mode === 'restore' || signedInJustNow
+
+/**
+ * Privy calls `onComplete` for a finished sign-in, but ALSO straight away, with `wasAlreadyAuthenticated: true`, when a session
+ * already exists. Only a sign-in this page started itself, on a browser that was not signed in, counts as "just signed in".
+ */
+export const isFreshSignIn = (done: { wasAlreadyAuthenticated: boolean }, weStartedIt: boolean): boolean => weStartedIt && !done.wasAlreadyAuthenticated
+
+/**
+ * Is this embedded wallet one of the signed-in user's own? The wallet list can lag behind a sign-out and sign-in for a moment
+ * and still show the previous person's wallet, so a wallet is handed over only if the current user's accounts include it.
+ */
+export const ownsEmbedded = (user: { linkedAccounts?: ReadonlyArray<{ type: string; address?: string; walletClientType?: string }> } | null | undefined, address: string): boolean =>
+  !!user?.linkedAccounts?.some(a => a.type === 'wallet' && a.walletClientType === 'privy' && a.address?.toLowerCase() === address.toLowerCase())
