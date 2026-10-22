@@ -6,6 +6,7 @@ import { keyName, PITCHES, STEPS } from './music'
 import type { Song } from './share'
 import { palette, paintBackground, type Pal } from './palette'
 import type { Theme } from './theme'
+import { fontsReady } from './fonts'
 
 // A poster for a song: its notes become paint. Every vowel has a colour, every note a bloom,
 // and a thin ink line runs through them in the order they are sung. Same song, same poster, always.
@@ -109,6 +110,7 @@ export async function makePoster({ song, byId, title, subtitle, hero, mode }: Po
   const pal = palette(mode)
   const ids = [...new Set(song.notes.map(n => n.id))]
   const imgs = new Map<number, HTMLImageElement>()
+  await fontsReady()
   await Promise.all([
     document.fonts?.load('150px "Bagel Fat One"'),
     document.fonts?.load('600 34px "Hanken Grotesk"'),

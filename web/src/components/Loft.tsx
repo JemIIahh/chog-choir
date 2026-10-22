@@ -102,7 +102,7 @@ export const Loft = memo(function Loft({ chogs, stats, epoch, mine, selectedId, 
     const el = wrap.current
     if (!el) return
     const ro = new ResizeObserver(([e]) => {
-      const w = Math.max(320, Math.floor(e.contentRect.width))
+      const w = Math.max(260, Math.floor(e.contentRect.width))
       setSize({ w, h: Math.round(Math.min(330, Math.max(210, w * 0.34))) })
     })
     ro.observe(el)

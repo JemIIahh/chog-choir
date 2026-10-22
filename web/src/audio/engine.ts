@@ -2,6 +2,7 @@ import { midiFor, STEPS } from '../lib/music'
 import type { Song } from '../lib/share'
 import { createBus, playNote, scheduleStep, type Bus, type SpecOf } from './synth'
 import { stepSeconds } from './timing'
+import { claimPlayback, holdMedia, needsMediaHold, newAudioContext } from './unlock'
 import type { VoiceSpec } from './voice'
 
 const LOOKAHEAD = 0.18 // seconds of audio scheduled ahead of the clock
@@ -23,9 +24,12 @@ export class ChoirEngine {
   /** audio-clock time at which step 0 of the current run sounds */
   t0 = 0
   onStep: ((e: StepEvent) => void) | null = null
+  private holdTimer: number | null = null
+  // a phone call, Siri or a locked screen can stop the sound; coming back to the page starts it again
+  private readonly onVisible = () => { if (!document.hidden && (this.ctx.state as string) !== 'running' && (this.ctx.state as string) !== 'closed') void this.ctx.resume().catch(() => undefined) }
 
   constructor(song: Song, specOf: SpecOf) {
-    this.ctx = new AudioContext({ latencyHint: 'interactive' })
+    this.ctx = newAudioContext({ latencyHint: 'interactive' })
     this.bus = createBus(this.ctx)
     this.bus.output.connect(this.ctx.destination)
     this.recordTap = this.ctx.createMediaStreamDestination()
@@ -33,6 +37,31 @@ export class ChoirEngine {
     this.song = song
     this.specOf = specOf
     this.apply()
+    document.addEventListener('visibilitychange', this.onVisible)
+  }
+
+  /** Run on the first touch: phones only let sound start from a tap, so this gets the permission for the rest of the visit. */
+  unlock() {
+    claimPlayback()
+    void this.resume()
+    const nudge = this.ctx.createBufferSource() // the classic: a silent one-sample sound started inside the tap
+    nudge.buffer = this.ctx.createBuffer(1, 1, 22050)
+    nudge.connect(this.ctx.destination)
+    nudge.start(0)
+  }
+
+  private async resume() {
+    if ((this.ctx.state as string) === 'running') return
+    try { await this.ctx.resume() } catch { /* the caller checks the state afterwards and says so */ }
+  }
+
+  /** Keep the phone treating the page as one that plays sound. Older iOS needs a silent media element playing for that. */
+  private keepPlaying(releaseAfterMs?: number) {
+    claimPlayback()
+    if (!needsMediaHold()) return
+    holdMedia(true)
+    if (this.holdTimer !== null) window.clearTimeout(this.holdTimer)
+    this.holdTimer = releaseAfterMs ? window.setTimeout(() => { if (!this.playing) holdMedia(false) }, releaseAfterMs) : null
   }
 
   /** Everything the engine reads live comes from here, so sliders move the sound as they move. */
@@ -47,7 +76,8 @@ export class ChoirEngine {
   }
 
   async start(fromStart = true) {
-    if (this.ctx.state !== 'running') await this.ctx.resume()
+    this.keepPlaying() // first, still inside the tap
+    await this.resume()
     if (this.playing) return
     this.playing = true
     if (fromStart) this.nextStep = 0
@@ -61,6 +91,10 @@ export class ChoirEngine {
     this.playing = false
     if (this.timer !== null) window.clearInterval(this.timer)
     this.timer = null
+    if (needsMediaHold()) {
+      if (this.holdTimer !== null) window.clearTimeout(this.holdTimer)
+      this.holdTimer = window.setTimeout(() => { if (!this.playing) holdMedia(false) }, 2500)
+    }
   }
 
   private tick() {
@@ -75,7 +109,8 @@ export class ChoirEngine {
 
   /** Hear a single Chog right now, without touching the song. */
   async audition(spec: VoiceSpec, pitch: number, id: number) {
-    if (this.ctx.state !== 'running') await this.ctx.resume()
+    this.keepPlaying(3500)
+    await this.resume()
     const t = this.ctx.currentTime + 0.02
     playNote(this.ctx, this.bus, spec, midiFor(pitch, this.song.root, this.song.mode), t, 0.85, 1.8, id) // a lone Chog should be clearly audible, unlike one voice in a crowd
   }
@@ -87,6 +122,9 @@ export class ChoirEngine {
 
   dispose() {
     this.stop()
+    document.removeEventListener('visibilitychange', this.onVisible)
+    if (this.holdTimer !== null) window.clearTimeout(this.holdTimer)
+    holdMedia(false)
     void this.ctx.close()
   }
 }

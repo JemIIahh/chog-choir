@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { renderSong } from './audio/render'
 import { songFor } from './lib/songs'
 import { usePlayer } from './audio/usePlayer'
+import { useToast } from './lib/useToast'
 import type { Song } from './lib/share'
 import { loadChogs, type Chog } from './data/chogs'
 import { defaultNet, rememberNet, resolveTargets, type Net } from './chain/config'
@@ -47,7 +48,8 @@ function Splash({ text }: { text: string }) {
 function Shell({ chogs }: { chogs: Chog[] }) {
   const byId = useMemo(() => new Map(chogs.map(c => [c.id, c])), [chogs])
   const byN = useMemo(() => new Map(chogs.map(c => [c.n, c])), [chogs])
-  const player = usePlayer(byId)
+  const { flash, node: notice } = useToast()
+  const player = usePlayer(byId, flash)
   const [view, setView] = useState<View>(viewFromHash)
   const targets = useMemo(resolveTargets, [])
   // first visit to the front door gets the welcome; links to a song, the studio or the choir go straight there
@@ -115,6 +117,7 @@ function Shell({ chogs }: { chogs: Chog[] }) {
       {view === 'choir' && <Choir chogs={chogs} byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
       {view === 'records' && <Records byId={byId} player={player} targets={targets} net={net} setNet={setNet} />}
     </div>
+    {notice}
     </>
   )
 }

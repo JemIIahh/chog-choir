@@ -101,3 +101,31 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 120; pointer-even
 .stage.songs { position: relative; overflow: hidden; }
 .stage.songs::before { content: ''; position: absolute; right: -50px; top: 140px; width: 380px; height: 380px; pointer-events: none; background: radial-gradient(circle, var(--dots) 26%, transparent 28%) 0 0 / 16px 16px; -webkit-mask: radial-gradient(circle at 60% 40%, #000 0, transparent 62%); mask: radial-gradient(circle at 60% 40%, #000 0, transparent 62%); opacity: 0.2; }
 .stage.songs > * { position: relative; z-index: 1; }
+
+/* ── phones ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   The welcome fits the screen and keeps Back and Next in reach (its content scrolls, they do not); the loft and the record fit a
+   narrow screen; buttons and tabs are big enough for a thumb; the staff says it scrolls. */
+.onb-wide { grid-template-columns: minmax(0, 1fr); }
+.onb-wide .loft { min-width: 0; max-width: 100%; overflow: hidden; }
+.loft { min-width: 0; max-width: 100%; }
+@media (max-width: 760px) {
+  .onb { display: block; padding: 0; }
+  .onb-card { display: flex; flex-direction: column; gap: 0; height: 100%; min-height: 0; max-height: none; padding: 52px 20px 0; overflow: hidden; }
+  .onb-body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; align-content: start; align-items: start; padding: 4px 0 34px; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent); } /* the fade says there is more below */
+  .onb-foot { flex: none; flex-wrap: wrap; gap: 10px 12px; padding: 12px 0 calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .hero .sleeve-wrap { --s: min(190px, calc((100vw - 60px) / 1.68)); }
+  .staff-wrap::after { content: 'Swipe sideways to see all 16 steps \2192'; display: block; position: sticky; left: 0; width: 100%; box-sizing: border-box; padding: 0 12px 10px; text-align: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+}
+@media (max-width: 760px), (pointer: coarse) {
+  .btn { height: 44px; }
+  .btn.small { height: 40px; }
+  .btn.dark { height: 44px; }
+  .tabs a { padding-top: 13px; padding-bottom: 13px; }
+  .mode { width: 44px; height: 44px; }
+  .chip { height: 36px; }
+  .netswitch button { padding: 10px 14px; }
+}
+.toast { z-index: 60; max-width: calc(100vw - 32px); text-align: center; }
+/* a narrow screen in a wider fallback font (the web font can be late or missing): the tabs still fit */
+.tabs { max-width: 100%; }
+@media (max-width: 360px) { .tabs { gap: 2px; } .tabs a { padding-left: 9px; padding-right: 9px; } }

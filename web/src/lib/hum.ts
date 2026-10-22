@@ -1,3 +1,4 @@
+import { claimPlayback, newAudioContext, setSession } from '../audio/unlock'
 import { detectPitch } from './pitch'
 
 export class HumError extends Error {}
@@ -10,13 +11,15 @@ export async function listenForHum(opts: { steps: number; stepSeconds: number; o
   const { steps, stepSeconds, onFrame, signal } = opts
   if (!navigator.mediaDevices?.getUserMedia) throw new HumError('This browser cannot use a microphone here. Try Chrome or Safari on https.')
   let stream: MediaStream
+  setSession('play-and-record') // iOS: the microphone only works while the session allows recording
   try {
     // a voice, not a call: no echo cancelling or auto gain, which would mangle a held note
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
   } catch {
+    claimPlayback()
     throw new HumError('The microphone is blocked. Allow it for this page, then try again.')
   }
-  const ctx = new AudioContext()
+  const ctx = newAudioContext()
   try {
     const an = ctx.createAnalyser()
     an.fftSize = 4096
@@ -41,5 +44,6 @@ export async function listenForHum(opts: { steps: number; stepSeconds: number; o
   } finally {
     stream.getTracks().forEach(t => t.stop())
     void ctx.close()
+    claimPlayback() // and back to playback, so the Chog's answer is not played quietly through the earpiece
   }
 }

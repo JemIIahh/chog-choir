@@ -9,6 +9,7 @@ import { halftone, inked } from './poster'
 import { palette, paintBackground, type Pal } from './palette'
 import type { Theme } from './theme'
 import { thumbLg } from '../data/chogs'
+import { fontsReady } from './fonts'
 
 const SIZE = 1080
 const RING = ['#ff6b57', '#ffb02e', '#2fcf95', '#35b6f0', '#a47bff']
@@ -266,6 +267,7 @@ export async function recordClip({ song, byId, engine, title, subtitle, card, mo
   const pal = palette(mode)
   const ids = [...new Set(song.notes.map(n => n.id))]
   const faces = new Map<number, HTMLImageElement>()
+  await fontsReady()
   await Promise.all([
     document.fonts?.load('64px "Bagel Fat One"'),
     document.fonts?.load('600 28px "Hanken Grotesk"'),
