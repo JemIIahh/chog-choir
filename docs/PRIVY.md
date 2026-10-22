@@ -2,6 +2,13 @@
 
 An optional second way in for people who have no crypto wallet: they sign in with an email code or Google and get an embedded wallet. It is **off until you give it a Privy App ID**, and when it is off the page has no such option and never contacts Privy. The Privy SDK is a separate download, fetched only when someone picks "Email or Google".
 
+## Current state (2026-10-22)
+
+- App ID `cmvj6kyvc00jn0hjt8w4mqayr` ("ChogChoir"), set as `VITE_PRIVY_APP_ID` in Vercel production and in `web/.env.local`. The live site shows **Sign in with email** and opens Privy's real sign-in window.
+- In the Privy dashboard **Email is on and Google is off**, so the page offers email only (`VITE_PRIVY_METHODS` defaults to `email`). To add Google: enable it under *Login methods*, set `VITE_PRIVY_METHODS=email,google` in Vercel, redeploy.
+- *Allowed origins* is empty and Privy accepts any origin, so the live site and localhost both work. Adding `https://chog-choir.vercel.app` there would stop other sites from using this App ID.
+- Embedded wallets are created on sign-in by the page's own setting (the dashboard default is "off").
+
 ## Turn it on
 
 1. Create an app at <https://dashboard.privy.io> (a "Client-side" app).
