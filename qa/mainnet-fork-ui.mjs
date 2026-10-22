@@ -68,7 +68,7 @@ try {
   page.on('pageerror', e => errors.push('pageerror: ' + e.message))
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()) })
 
-  await page.goto(`http://127.0.0.1:5188/?chain=143&rpc=${RPC}&choir=${CHOIR}&nft=${NFT}&token=${TOKEN}&epoch=86400&real=1#choir`, { waitUntil: 'networkidle' })
+  await page.goto(`http://127.0.0.1:5188/?chain=143&rpc=${RPC}&choir=${CHOIR}&nft=${NFT}&token=${TOKEN}&epoch=86400&real=1&net=main#choir`, { waitUntil: 'networkidle' })
   await page.waitForFunction(() => /^Round \d+$/.test(document.querySelector('.stage h1')?.textContent ?? ''), null, { timeout: 30000 })
   await page.click('button.wrow:has-text("Mock wallet")')
   await page.waitForFunction(n => document.querySelectorAll('.mine .thumb').length === n, count, { timeout: 60000 })

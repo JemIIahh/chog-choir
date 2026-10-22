@@ -1,0 +1,44 @@
+Chog Choir turns the Chog Genesis collection into an instrument that holders play together.
+
+A Chog's traits are not decoration here: they decide how it sounds. Type any Chog's number and hear its own song. Then holders put all 1,969 Chogs into one shared, on-chain choir on Monad, one note each per round.
+
+SONGS
+Every Chog has its own key, scale, tempo, band and vocal hook, read from its real traits. The mouth picks the vowel it sings (ahh, ehh, eee, ohh, ooo) and the mood of the scale. The body picks the voice type (bass, tenor, alto, soprano) and the key. The eyes set the tempo and tone: laser eyes are bright and buzzy, crying eyes soft and breathy. The head shapes how a note starts, the accessory adds an effect, and the tier sets how many voices sing in unison. A card on every Chog explains each line in plain words, so you can hear why your Chog sounds the way it does. The voice is a formant synthesiser built from scratch in the browser. There are no samples.
+
+PLAY WITH IT
+Hum a tune into your microphone and the Chog sings it back in its own voice and key. Nothing is recorded or sent anywhere: the pitch is read in your browser. Add a second Chog for a duet; both sing in the first Chog's key, so any pair fits. Save a clip, save a poster, or share a link.
+
+THE CHOIR
+One shared loop per round. A Chog can place one note per round, and only its owner can: the contract checks ownerOf on the real Chog Genesis collection. A loft shows all 1,969 Chogs seated by voice type and lighting up as they sing. The band builds as more distinct Chogs have sung: voices alone, then a pad (5 Chogs), bass (25), then drums (100), so every holder makes it better for every other holder. Streaks track who keeps coming back. Someone who holds many Chogs sings them all in one transaction. A slider asks "what if more Chogs sing?" and plays a clearly labelled preview of a fuller choir, so even a quiet round shows what the band becomes.
+
+$CHOG
+A Chog that has sung can take an encore: burn 1,000 $CHOG for a second note. It is a real burn of the real $CHOG: the choir pulls the tokens in and calls burn(), so the token's total supply goes down by exactly that amount, and the app shows how much the choir has burned.
+
+RECORDS
+Anyone can seal a finished round on-chain. Sealed rounds are kept in Records and play back for good, and Play all runs every sealed round in order, like an album.
+
+STUDIO
+Open to everyone. Put any Chogs on a staff, pick a beat and a key, and share the whole band as a link.
+
+WHAT MAKES IT NEW
+Nobody has made music out of a collection's traits, and nobody has turned a collection into one instrument that holders play together, round after round. Most NFT projects use the art as a skin on a game. Here the metadata itself is the sound.
+
+WHY THE CHOG NFT IS ESSENTIAL
+If you removed the NFT, this would not work the same way, and most of it would not exist.
+- No Chog, no voice. A song is a Chog's traits. Remove the collection's metadata and there is nothing to play.
+- No Chog, no seat. Singing in the Choir is checked on-chain against the real collection with ownerOf: one Chog, one note per round, and only its current owner can place it. Buy the Chog and you can sing it; sell it and you cannot.
+- The band depends on holders. It only grows as more distinct Chogs sing, so every holder makes the choir better for every other holder, and a holder's streak lives on their Chog.
+- Encores burn $CHOG, so the token has a real job in the loop.
+We kept Songs and Studio open on purpose, so anyone can hear a Chog before they own one. That is the way in; the shared choir is the reason to hold one.
+
+ON MONAD MAINNET AND TESTNET
+The Choir runs on Monad mainnet with the real Chog Genesis collection and the real $CHOG, in one-day rounds that turn over at 00:00 UTC. A free copy runs on Monad testnet with a replica collection and a faucet token, so anyone can try singing without owning a Chog. You can listen to everything without connecting a wallet. Connecting one shows which Chogs you own, and it is needed to sing: use any browser wallet, or sign in with email or Google and a wallet is created for you.
+
+HOW IT RUNS
+There is no backend of our own: everything is the browser plus the chain. Each round's key and mode are derived on-chain from the round number, so everyone sings in the same key.
+
+HOW IT WAS CHECKED
+38 contract tests and 80+ unit tests. A browser test of the whole product, run against a local chain and against real Monad testnet with real transactions. A rehearsal of the mainnet deployment against the real collection and the real token: the biggest real holder (73 Chogs) singing in one batch, and a real burn lowering the $CHOG supply by exactly the price.
+
+HONEST LIMITS
+The audio was measured offline (pitch, vowel formants, loudness and clipping across 200 songs). On testnet the Chogs are free copies, and the notes in the current testnet rounds come from the project's own wallet so the choir does not sound empty; those transactions are on the explorer and are not user activity. The mainnet choir starts empty and fills only as holders sing.

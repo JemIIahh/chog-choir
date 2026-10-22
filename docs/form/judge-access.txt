@@ -1,0 +1,25 @@
+Open https://chog-choir.vercel.app. You can listen to everything without logging in. A wallet is only needed to sing in The Choir (steps 3 and 5): press "Connect wallet" at the top right and use any browser wallet, or sign in with email or Google and one is created for you.
+
+1. SONGS
+Type a Chog number (try 1462) and press Play. Try "Duet with Chog #" with 88 and press Sing together. Press "Hum a tune", allow the microphone, wait for the count-in, then hum "ooo" or "la" with a few different notes for about five seconds: the Chog sings your tune back. Save clip, Save poster and Copy link show the exports. If you connect a wallet here, it shows the Chogs you own.
+
+2. STUDIO
+Pick a Chog, tap the staff to place its note, change the beat and key, press Play, and copy the link.
+
+3. THE CHOIR, FREE VERSION (Monad testnet, chain 10143)
+This is what The Choir opens on, so you can try everything without owning a Chog.
+a. Get free testnet MON for gas from https://faucet.monad.xyz or the Alchemy Monad testnet faucet (no sign-up needed).
+b. Press "Connect wallet". Use any browser wallet, or choose "Email or Google": a wallet is created for you, and Privy asks you to confirm each transaction. A new wallet starts with no MON, so press "Copy my address" and send that address the testnet MON from the faucet.
+c. Press "Claim a free Chog" (a free copy of the real collection). Pick it, tap a cell on the staff, and press Sing. Your Chog lights up in the loft and the voice count goes up.
+d. Claim two or three Chogs and press "Sing with all": they all sing in one transaction.
+e. Press "Get 1,000 test $CHOG", tap a cell, and press the encore button. It burns 1,000 test $CHOG, adds a second voice, and the "$CHOG burned" counter goes up.
+f. Drag "What if more Chogs sing?" to hear the band fill out. It is a preview and is never sent to the chain.
+Rounds last 30 minutes on testnet.
+
+4. RECORDS
+When a round ends anyone can press "Seal it". Sealed rounds play back, and "Play all" plays every sealed round in order.
+
+5. THE REAL VERSION (Monad mainnet, chain 143)
+Press "Real Chogs on Monad" at the top of The Choir. Singing here needs a real Chog Genesis in your connected wallet (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763) and a little MON, and an encore burns real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). If you do not hold a Chog you can still watch the round, play it, and use the preview slider. Rounds are one day long and turn over at 00:00 UTC.
+
+The code is at https://github.com/JemIIahh/chog-choir . Its README lists every contract address and how each part was tested.

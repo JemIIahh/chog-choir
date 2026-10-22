@@ -31,8 +31,9 @@ export type Net = 'main' | 'test'
 /**
  * Where the Choir lives. `main` is Monad mainnet with the real Chog Genesis collection; `test` is Monad testnet with
  * free replica Chogs, so anyone can try it. Both read from the committed deployments.json.
- * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points `test` at a local chain for tests (add &real=1 to treat it as the real
- * collection: no free claims, no faucet). The production build ignores all of these.
+ * In dev, ?chain=31337&rpc=...&choir=0x..&nft=0x.. points `test` at a local chain for tests. Add &real=1 and the address is
+ * instead the real-Chogs side (`main`), a fork of Monad mainnet shown as Monad: no free claims, no faucet, and the free testnet
+ * side keeps its live deployment. The production build ignores all of these.
  */
 export function resolveTargets(): Record<Net, Target> {
   const all = deployments as Record<string, Deployment | null>
@@ -46,17 +47,24 @@ export function resolveTargets(): Record<Net, Target> {
     const choir = q.get('choir')
     const nft = q.get('nft')
     if (rpc && choir && nft) {
-      const id = Number(q.get('chain') ?? 31337)
-      const chain = defineChain({
-        id,
-        name: 'Local',
-        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-        rpcUrls: { default: { http: [rpc] } },
-        contracts: { multicall3: { address: MULTICALL3 } },
-      })
       const token = (q.get('token') ?? '0x0000000000000000000000000000000000000000') as Address
-      out.test = { chain, deployment: { choir: choir as Address, nft: nft as Address, token, encorePrice: q.get('price') ?? '1000000000000000000000', epochSeconds: Number(q.get('epoch') ?? 3600), faucet: q.get('real') ? undefined : true } }
-      out.main = { chain: monadMainnet, deployment: null }
+      const deployment: Deployment = { choir: choir as Address, nft: nft as Address, token, encorePrice: q.get('price') ?? '1000000000000000000000', epochSeconds: Number(q.get('epoch') ?? 3600), faucet: q.get('real') ? undefined : true }
+      if (q.get('real')) {
+        // a fork of Monad mainnet with the real collection and token, shown as the real-Chogs side (used for rehearsals and the film);
+        // the free testnet side stays as it is
+        out.main = { chain: defineChain({ ...monadMainnet, rpcUrls: { default: { http: [rpc] } } }), deployment }
+      } else {
+        const id = Number(q.get('chain') ?? 31337)
+        const chain = defineChain({
+          id,
+          name: 'Local',
+          nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          rpcUrls: { default: { http: [rpc] } },
+          contracts: { multicall3: { address: MULTICALL3 } },
+        })
+        out.test = { chain, deployment }
+        out.main = { chain: monadMainnet, deployment: null }
+      }
     }
   }
   return out

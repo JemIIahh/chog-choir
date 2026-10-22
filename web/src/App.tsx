@@ -66,6 +66,8 @@ function Shell({ chogs }: { chogs: Chog[] }) {
       chogs,
       song: player.current,
       songFor,
+      // the audio the page is playing, as a stream, so a film can record exactly what the app sounds like
+      tap: () => player.getEngine().recordTap.stream,
       render: async (s: Song, loops = 1) => {
         const buf = await renderSong(s, player.specOf, loops)
         return { rate: buf.sampleRate, left: Array.from(buf.getChannelData(0)), right: Array.from(buf.getChannelData(1)) }

@@ -1,0 +1,20 @@
+WHO FIRST
+Chog holders, because the Choir needs them, and the wider Monad community, who can try the free testnet version without owning a Chog.
+
+WHY THEY COME BACK
+Rounds repeat every day. Streaks track who shows up every round. The band only reaches full strength when enough different Chogs have sung (a pad at 5, bass at 25, drums at 100), and the loft makes the collective visible: you can see your Chog among the others. Encores give $CHOG a use that takes tokens out of supply, and the page shows the running total burned.
+
+HOW IT SPREADS
+Every Chog already has a clip, a poster in its own colours, and a link that opens straight to its song, all made in one tap. Holders post their Chog's song. A duet link pairs any two Chogs, so people can tag a friend's Chog, and a hummed tune is a personal clip nobody else can make.
+
+LAUNCH STEPS
+1. Post the clip of one Chog with a link that plays it, in the Chog Discord and on X.
+2. Post the loft each day from the daily mainnet round: how many Chogs sang, which band layer unlocked.
+3. Ask each holder to bring one other holder, to reach the next layer (25 singers for bass, 100 for drums).
+4. Collect feedback from the first holders and publish a changelog.
+
+WHAT IT COSTS
+Nothing beyond gas. There is no backend of our own to host, and the front end is a static site.
+
+WHAT WE WILL WATCH
+How many Chogs have sung, voices per round, streak length and how much $CHOG has been burned. All of it can be read straight from the contract.
