@@ -64,7 +64,7 @@ https://chog-choir.vercel.app (use this address, not a long `…-seunjeremiah200
 
 ## Judge access instructions (max 8,000 characters)
 
-No login. No wallet is needed to hear anything.
+You can listen to everything without logging in or connecting a wallet. A wallet is only needed to sing in The Choir; "Connect wallet" (top right) connects any browser wallet, or email or Google.
 
 1. Open the app. On **Songs**, type a Chog number (try 1462) and press Play. Try **Duet with Chog #** (88), and **Hum a tune** (allow the microphone, hum "ooo" for a few seconds when it says so). Tap Save clip or Save poster to see the exports.
 2. **Studio**: pick a Chog, tap the staff to place its note, change the beat and key, press Play, copy the link.
