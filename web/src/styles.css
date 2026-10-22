@@ -459,3 +459,6 @@ input[type='range']:focus-visible { outline-offset: 6px; }
 
 /* a holder of many Chogs gets a taller list; without grid-auto-rows the rows used to be squashed on top of each other */
 .thumbs.row.many { max-height: 300px; }
+
+/* email or Google sign-in row */
+.wicon.wmail { background: color-mix(in srgb, var(--sun) 55%, var(--paper-2)); color: var(--ink); }

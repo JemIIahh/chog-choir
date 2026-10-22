@@ -1,7 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Address } from 'viem'
 import { explain, makeReader, readHeld } from './client'
 import { monadMainnet, REAL_CHOG } from './config'
+import { PrivyGate } from './PrivyGate'
+import { PRIVY_APP_ID, PRIVY_ID, privyEnabled, type PrivyFound } from './privy'
 import { discoverWallets, requestAccount, sharedAccount, type Found } from './wallet'
 
 // One wallet connection for the whole app, shared by the header button, Songs, the welcome and the Choir.
@@ -26,6 +28,8 @@ type Ctx = {
   setMenuOpen(open: boolean): void
   /** the wallet connected last time, if the visitor did not disconnect */
   last: string | null
+  /** sign in with email or Google (Privy). Resolves true once the embedded wallet is connected. Absent unless configured. */
+  privy: { enabled: boolean; start(): Promise<boolean> }
 }
 
 const Wallet = createContext<Ctx | null>(null)
@@ -39,6 +43,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [last] = useState<string | null>(() => { try { return localStorage.getItem(KEY) } catch { return null } })
+  // Privy: null = not in use, 'login' = the visitor asked to sign in, 'restore' = quietly resume last time's session
+  const [privy, setPrivy] = useState<'login' | 'restore' | null>(() => (privyEnabled && last === PRIVY_ID ? 'restore' : null))
+  const logoutRef = useRef<(() => Promise<void>) | null>(null)
+  const waiting = useRef<((ok: boolean) => void) | null>(null)
 
   // find the wallets in this browser, and quietly pick up the one connected last time (no prompt)
   useEffect(() => {
@@ -59,6 +67,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connect = useCallback(async (w: Found) => {
     setBusy(true)
     setError(null)
+    setPrivy(null) // a browser wallet replaces any email wallet (its session stays, so it can be resumed later)
     try {
       const acc = await requestAccount(w)
       setFound(w)
@@ -74,9 +83,34 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const disconnect = useCallback(() => {
+    if (found?.rdns === PRIVY_ID) void logoutRef.current?.().catch(() => undefined)
+    setPrivy(null)
     setFound(null); setAccount(null); setHeld(null); setError(null)
     try { localStorage.removeItem(KEY) } catch { /* ignore */ }
+  }, [found])
+
+  // ── email or Google (Privy)
+  const startPrivy = useCallback(() => new Promise<boolean>(resolve => {
+    waiting.current?.(false)
+    waiting.current = resolve
+    setError(null)
+    setBusy(true)
+    setPrivy('login')
+  }), [])
+  const onPrivyWallet = useCallback((w: PrivyFound) => {
+    setFound(w); setAccount(w.address)
+    try { localStorage.setItem(KEY, PRIVY_ID) } catch { /* ignore */ }
+    setBusy(false)
+    waiting.current?.(true); waiting.current = null
   }, [])
+  const onPrivyGone = useCallback((message?: string) => {
+    setPrivy(null)
+    setBusy(false)
+    if (message) setError(message)
+    setFound(f => (f?.rdns === PRIVY_ID ? null : f)); setAccount(a => (found?.rdns === PRIVY_ID ? null : a))
+    waiting.current?.(false); waiting.current = null
+  }, [found])
+  const registerLogout = useCallback((fn: () => Promise<void>) => { logoutRef.current = fn }, [])
 
   // follow account switches inside the wallet
   useEffect(() => {
@@ -96,8 +130,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => { live = false }
   }, [account])
 
-  const value = useMemo(() => ({ wallets, found, account, held, busy, error, connect, disconnect, menuOpen, setMenuOpen, last }), [wallets, found, account, held, busy, error, connect, disconnect, menuOpen, last])
-  return <Wallet.Provider value={value}>{children}</Wallet.Provider>
+  const privyApi = useMemo(() => ({ enabled: privyEnabled, start: startPrivy }), [startPrivy])
+  const value = useMemo(() => ({ wallets, found, account, held, busy, error, connect, disconnect, menuOpen, setMenuOpen, last, privy: privyApi }), [wallets, found, account, held, busy, error, connect, disconnect, menuOpen, last, privyApi])
+  return (
+    <Wallet.Provider value={value}>
+      {children}
+      {PRIVY_APP_ID && privy && <PrivyGate appId={PRIVY_APP_ID} mode={privy} onWallet={onPrivyWallet} onGone={onPrivyGone} registerLogout={registerLogout} />}
+    </Wallet.Provider>
+  )
 }
 
 export function useWalletCtx(): Ctx {
