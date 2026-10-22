@@ -6,8 +6,8 @@ Field names follow the Chogathon form. Anything in [square brackets] needs a rea
 
 - [ ] Demo video recorded and uploaded (YouTube Unlisted, or Google Drive "Anyone with the link" = Viewer), 3 minutes at most. **Required.**
 - [ ] Contact email (judges only). **Required.**
-- [ ] App link live and tested from a clean browser.
-- [ ] GitHub repo public (README is the tech and testing guide).
+- [x] App link live and tested from a clean browser (production smoke test passes on it).
+- [x] GitHub repo public (README is the tech and testing guide).
 - [ ] Team members, X and Discord handles.
 - [ ] Mainnet decision made. If mainnet is deployed, uncomment the **[MAINNET]** lines below; if not, delete them.
 - [ ] Real feedback or usage added under "What's next". Do not invent any.
@@ -60,7 +60,7 @@ Encores burn $CHOG (1,000 per encore, read from the contract) with a real `burn(
 
 ## App link
 
-[Live URL]. Dark and light mode follow your system and can be switched at the top.
+https://chog-choir.vercel.app (use this address, not a long `…-seunjeremiah2003-…vercel.app` deployment link: those ask for a Vercel login). Dark and light mode follow your system and can be switched at the top.
 
 ## Judge access instructions (max 8,000 characters)
 
@@ -86,7 +86,7 @@ Vite, React, TypeScript, viem. Web Audio: formant synthesis, a small drum and ba
 
 ## GitHub repo
 
-[Repo URL]
+https://github.com/JemIIahh/chog-choir
 
 ## Pre-existing work
 

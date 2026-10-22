@@ -1,6 +1,7 @@
 // The production build, exactly as a judge will load it: no dev overrides, the committed deployments.json, the public RPCs.
 // Starts `vite preview` itself and stops it when done.
-//   node smoke-prod.mjs            (run `pnpm build` in web/ first)
+//   node smoke-prod.mjs                          (run `pnpm build` in web/ first; serves it locally)
+//   node smoke-prod.mjs https://chog-choir.vercel.app/   (the live deployment)
 import { chromium } from 'playwright'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
@@ -9,9 +10,10 @@ import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const PORT = 4173
-const BASE = `http://127.0.0.1:${PORT}/`
-const server = spawn(path.join(here, '../web/node_modules/.bin/vite'), ['preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'], { cwd: path.join(here, '../web'), stdio: 'ignore' })
-const stop = () => { try { server.kill() } catch { /* gone */ } }
+const REMOTE = process.argv[2]
+const BASE = REMOTE ? REMOTE.replace(/\/?$/, '/') : `http://127.0.0.1:${PORT}/`
+const server = REMOTE ? null : spawn(path.join(here, '../web/node_modules/.bin/vite'), ['preview', '--host', '127.0.0.1', '--port', String(PORT), '--strictPort'], { cwd: path.join(here, '../web'), stdio: 'ignore' })
+const stop = () => { try { server?.kill() } catch { /* gone */ } }
 process.on('exit', stop)
 for (let i = 0; i < 30; i++) { try { if ((await fetch(BASE)).ok) break } catch { /* not up yet */ } await new Promise(r => setTimeout(r, 500)) }
 
@@ -73,7 +75,8 @@ try {
   }
   step('Songs, Choir, Records and Studio fit a phone with no sideways scroll')
 
-  const hosts = [...requests].filter(h => !/^127\.0\.0\.1/.test(h))
+  const own = new URL(BASE).host
+  const hosts = [...requests].filter(h => !/^127\.0\.0\.1/.test(h) && h !== own)
   step(`the page talked to: ${hosts.join(', ')}`)
   const unexpected = hosts.filter(h => !/monad|ankr|fonts\.g(oogleapis|static)\.com/.test(h))
   assert.deepEqual(unexpected, [])

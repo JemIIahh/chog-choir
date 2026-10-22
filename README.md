@@ -2,7 +2,7 @@
 
 Every Chog has a voice, and a song. Its real traits decide how it sounds.
 
-Built for Chogathon 2026. Live app: _TBD_ · Demo video: _TBD_ · Contracts: see [Deployments](#deployments).
+Built for Chogathon 2026. **Live app: <https://chog-choir.vercel.app>** · Repo: <https://github.com/JemIIahh/chog-choir> · Demo video: _TBD_ · Contracts: see [Deployments](#deployments).
 
 ## What it is
 

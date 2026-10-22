@@ -19,3 +19,4 @@ qa/hum.wav
 qa/shots/
 qa/.testnet-e2e.log
 qa/.seed.*
+.vercel

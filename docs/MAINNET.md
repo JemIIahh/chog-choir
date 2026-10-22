@@ -28,7 +28,7 @@ The script **refuses** on chain 143 unless `NFT` and `TOKEN` are exactly those t
    ```
    (no `faucet` field: that is what makes the page behave as the real-collection experience).
 2. Read it back: `cast call <CHOIR> "chogToken()(address)" --rpc-url https://rpc.monad.xyz` must print the real $CHOG, `chog()` the real collection, `epochSeconds()` 86400, `encorePrice()` 1000e18, and `startTime() % 86400` must be 0.
-3. `cd web && pnpm build && node ../qa/smoke-prod.mjs`, then switch the page to "Real Chogs on Monad" and check the round loads.
+3. `cd web && pnpm build && node ../qa/smoke-prod.mjs`, then redeploy the app (`cd web && vercel deploy --prod`; the project is already linked) and run `node qa/smoke-prod.mjs https://chog-choir.vercel.app/`. Switch the page to "Real Chogs on Monad" and check the round loads.
 4. Verify the source on the explorer so judges can read it.
 5. Sing with a real Chog yourself and take one encore, so the first real activity is yours and you see the burn on the explorer.
 6. Update `SUBMISSION.md` (uncomment the **[MAINNET]** lines) and the README deployments table.
