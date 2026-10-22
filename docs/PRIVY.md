@@ -5,7 +5,8 @@ An optional second way in for people who have no crypto wallet: they sign in wit
 ## Current state (2026-10-22)
 
 - App ID `cmvj6kyvc00jn0hjt8w4mqayr` ("ChogChoir"), set as `VITE_PRIVY_APP_ID` in Vercel production and in `web/.env.local`. The live site shows **Sign in with email** and opens Privy's real sign-in window.
-- In the Privy dashboard **Email is on and Google is off**, so the page offers email only (`VITE_PRIVY_METHODS` defaults to `email`). To add Google: enable it under *Login methods*, set `VITE_PRIVY_METHODS=email,google` in Vercel, redeploy.
+- In the Privy dashboard **Email and Google are both on**, and `VITE_PRIVY_METHODS=email,google` is set in Vercel production, so the live site offers **Email or Google**. (Without that variable the page offers email only, because a method that is not switched on in the dashboard would fail.)
+- Google sign-in leaves the page for Google and comes back with `privy_oauth_*` in the address. The Privy SDK only finishes the sign-in if it is running when the page loads, so a tab that started a sign-in remembers that for ten minutes and starts it again on the way back; a link with those parameters from any other tab does nothing. If the sign-in cannot finish, the visitor sees a message in the connect window.
 - *Allowed origins* is empty and Privy accepts any origin, so the live site and localhost both work. Adding `https://chog-choir.vercel.app` there would stop other sites from using this App ID.
 - Embedded wallets are created on sign-in by the page's own setting (the dashboard default is "off").
 
@@ -40,4 +41,4 @@ An embedded wallet starts with **0 MON**, and singing is a transaction. On testn
 
 ## What is and is not tested
 
-`node qa/privy.mjs` checks the part that does not need a real app: with no id the option is absent and Privy is never contacted; with an id Privy rejects, the option shows, fails with a clear message after about 20 seconds, and the rest of the page keeps working. **A real sign-in needs a real App ID and an email code, so it has not been run** until you set one up. With a Privy test account it can be added to `qa/` in a few minutes.
+`node qa/privy-live.mjs <address> [--google]` opens the real Privy window from the page and, with `--google`, checks that clicking Google leaves for accounts.google.com (it enters nothing, so it sends no messages and creates no users). `node qa/privy.mjs` checks the part that does not need a real app, including the way back from Google: with no id the option is absent and Privy is never contacted; with an id Privy rejects, the option shows, fails with a clear message after about 20 seconds, and the rest of the page keeps working. **A real sign-in needs a real App ID and an email code, so it has not been run** until you set one up. With a Privy test account it can be added to `qa/` in a few minutes.
