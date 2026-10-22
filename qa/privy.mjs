@@ -1,6 +1,7 @@
 // Email / Google sign-in (Privy) is optional and must never get in the way. Checks, without a real Privy app:
 //   1. no app id configured  -> no such option, and the page never contacts Privy
 //   2. an app id Privy rejects -> the option shows, fails with a clear message after a wait, and the rest of the page keeps working
+//   3. the way back from Google -> only a tab that started a sign-in finishes one; a stray link does nothing
 // (A real sign-in needs a real Privy app id and an email code: see docs/PRIVY.md.)
 //   node privy.mjs
 import { chromium } from 'playwright'
@@ -63,6 +64,30 @@ try {
   assert.equal(await b.page.locator('.play.wide.on').count(), 1)
   assert.equal(b.uncaught.length, 0, b.uncaught.join('\n'))
   step('the page carries on: the modal closes, a song plays, nothing crashed')
+  // 3. coming back from Google
+  const RET = '?privy_oauth_code=abc&privy_oauth_state=xyz&privy_oauth_provider=google'
+  const ctx3 = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  await ctx3.addInitScript(() => localStorage.setItem('chogchoir:welcome-seen', '1'))
+  const stray = await ctx3.newPage()
+  const strayHosts = new Set()
+  stray.on('request', r => strayHosts.add(new URL(r.url()).host))
+  await stray.goto(on + RET + '#choir', { waitUntil: 'networkidle' })
+  await stray.waitForTimeout(1500)
+  assert.ok(![...strayHosts].some(h => /privy/.test(h)))
+  step('a link carrying Google-return parameters, from a tab that never started a sign-in, does nothing (Privy is not even contacted)')
+
+  const back = await ctx3.newPage()
+  const backHosts = new Set()
+  back.on('request', r => backHosts.add(new URL(r.url()).host))
+  await back.addInitScript(() => { if (!sessionStorage.getItem('chogchoir:privy-oauth')) sessionStorage.setItem('chogchoir:privy-oauth', String(Date.now())) })
+  await back.goto(on + RET + '#choir', { waitUntil: 'networkidle' })
+  await back.waitForSelector('.wmodal .w-err', { timeout: 45000 })
+  assert.ok([...backHosts].some(h => /privy/.test(h)))
+  step('a tab that did start one starts Privy on the way back, and when the sign-in cannot finish the visitor is told, in the connect window')
+  await back.click('.wm-x')
+  await back.waitForSelector('.wmodal', { state: 'detached' })
+  assert.equal(await back.evaluate(() => sessionStorage.getItem('chogchoir:privy-oauth')), null)
+  step('and the remembered start is cleared, so it cannot be replayed')
   console.log('PRIVY FALLBACK PASSED')
 } catch (e) { failed = true; console.error(e) } finally { await browser.close(); stop() }
 process.exit(failed ? 1 : 0)

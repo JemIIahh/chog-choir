@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cleanAppId, isFreshSignIn, mayHandOver, ownsEmbedded, parseMethods, planFor } from './privy'
+import { cleanAppId, isFreshSignIn, isOAuthReturn, mayHandOver, OAUTH_MAX_AGE_MS, ownsEmbedded, parseMethods, planFor, startedRecently } from './privy'
 
 describe('cleanAppId', () => {
   it('accepts a Privy app id and trims it', () => {
@@ -72,5 +72,32 @@ describe('parseMethods: which sign-in methods to offer', () => {
   })
   it('ignores anything it does not know, so a typo cannot ask Privy for a method that is not set up', () => {
     expect(parseMethods('email,twitter,wallet,google,google')).toEqual(['email', 'google'])
+  })
+})
+
+describe('coming back from Google', () => {
+  it('recognises the address Privy returns to, and nothing else', () => {
+    expect(isOAuthReturn('?privy_oauth_code=abc&privy_oauth_state=xyz&privy_oauth_provider=google')).toBe(true)
+    expect(isOAuthReturn('?net=test&privy_oauth_state=xyz&privy_oauth_code=abc')).toBe(true)
+    for (const no of ['', '?net=test', '?privy_oauth_code=abc', '?privy_oauth_state=xyz', '?code=1&state=2']) expect(isOAuthReturn(no)).toBe(false)
+  })
+
+  it('finishes the sign-in only in the tab that started it, and only for ten minutes', () => {
+    const now = 1_800_000_000_000
+    expect(startedRecently(String(now - 5_000), now)).toBe(true)
+    expect(startedRecently(String(now - OAUTH_MAX_AGE_MS), now)).toBe(true)
+    expect(startedRecently(String(now - OAUTH_MAX_AGE_MS - 1), now)).toBe(false) // gone stale
+    expect(startedRecently(String(now + 60_000), now)).toBe(false) // a time from the future is not ours
+    for (const bad of [null, '', 'abc', '0', '-5', 'NaN']) expect(startedRecently(bad, now)).toBe(false)
+  })
+
+  it('waits for the SDK to finish, and hands over only after it reports a fresh sign-in', () => {
+    expect(planFor('oauth', false)).toBe('await')
+    expect(planFor('oauth', true)).toBe('await')
+    expect(mayHandOver('oauth', false)).toBe(false)
+    expect(mayHandOver('oauth', true)).toBe(true)
+    // the tab that came back from Google started the sign-in; a leftover session does not count
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: false }, true)).toBe(true)
+    expect(isFreshSignIn({ wasAlreadyAuthenticated: true }, true)).toBe(false)
   })
 })

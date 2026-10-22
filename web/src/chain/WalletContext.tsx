@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 import { explain, makeReader, readHeld } from './client'
 import { monadMainnet, REAL_CHOG } from './config'
 import { PrivyGate } from './PrivyGate'
-import { PRIVY_APP_ID, PRIVY_ID, privyEnabled, privyLabel, type PrivyFound } from './privy'
+import { forgetStart, initialMode, PRIVY_APP_ID, PRIVY_ID, privyEnabled, privyLabel, rememberStart, takeReturnHash, type Mode, type PrivyFound } from './privy'
 import { discoverWallets, requestAccount, sharedAccount, type Found } from './wallet'
 
 // One wallet connection for the whole app, shared by the header button, Songs, the welcome and the Choir.
@@ -39,12 +39,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [found, setFound] = useState<Found | null>(null)
   const [account, setAccount] = useState<Address | null>(null)
   const [held, setHeld] = useState<number[] | null>(null)
-  const [busy, setBusy] = useState(false)
+  // Privy: null = not in use, 'login' = the visitor asked to sign in, 'restore' = quietly resume last time's session,
+  // 'oauth' = the page has just come back from Google and the SDK is finishing that sign-in
+  const [privy, setPrivy] = useState<Mode | null>(() => initialMode((() => { try { return localStorage.getItem(KEY) } catch { return null } })()))
+  const [busy, setBusy] = useState(() => privy === 'oauth')
   const [error, setError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [last] = useState<string | null>(() => { try { return localStorage.getItem(KEY) } catch { return null } })
-  // Privy: null = not in use, 'login' = the visitor asked to sign in, 'restore' = quietly resume last time's session
-  const [privy, setPrivy] = useState<'login' | 'restore' | null>(() => (privyEnabled && last === PRIVY_ID ? 'restore' : null))
   const logoutRef = useRef<(() => Promise<void>) | null>(null)
   const waiting = useRef<((ok: boolean) => void) | null>(null)
   /** sign out of Privy, and only then take its host off the page (unmounting first could cut the sign-out short) */
@@ -92,6 +93,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(() => {
     setFound(null); setAccount(null); setHeld(null); setError(null)
     try { localStorage.removeItem(KEY) } catch { /* ignore */ }
+    forgetStart()
     void endPrivy()
   }, [endPrivy])
 
@@ -101,18 +103,30 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     waiting.current = resolve
     setError(null)
     setBusy(true)
+    rememberStart() // Google sign-in leaves the page; this lets the way back finish it
     setPrivy('login')
   }), [])
   const onPrivyWallet = useCallback((w: PrivyFound) => {
+    forgetStart()
+    // back from Google: put the page back where the visitor was and drop the sign-in parameters from the address
+    const ret = takeReturnHash()
+    const q = new URLSearchParams(location.search)
+    if (q.has('privy_oauth_code') || q.has('privy_oauth_state') || q.has('privy_oauth_provider')) {
+      ;['privy_oauth_code', 'privy_oauth_state', 'privy_oauth_provider'].forEach(k => q.delete(k))
+      history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}${ret ?? location.hash}`)
+      if (ret !== null && ret !== location.hash) location.hash = ret
+    }
     setFound(w); setAccount(w.address)
     try { localStorage.setItem(KEY, PRIVY_ID) } catch { /* ignore */ }
     setBusy(false)
     waiting.current?.(true); waiting.current = null
   }, [])
   const onPrivyGone = useCallback((message?: string) => {
+    forgetStart()
+    takeReturnHash()
     setPrivy(null)
     setBusy(false)
-    if (message) setError(message)
+    if (message) { setError(message); setMenuOpen(true) } // show the problem where the visitor can read it
     setFound(f => (f?.rdns === PRIVY_ID ? null : f)); setAccount(a => (found?.rdns === PRIVY_ID ? null : a))
     waiting.current?.(false); waiting.current = null
   }, [found])

@@ -46,12 +46,13 @@ export const privyMessages = {
  *    so choosing "Email or Google" always means a fresh sign-in and never hands over a wallet nobody just signed in to.
  *  - restore: the page reloaded and the visitor never disconnected; the session they had may be resumed.
  */
-export type Plan = 'login' | 'relogin' | 'resume' | 'gone'
-export const planFor = (mode: 'login' | 'restore', authenticated: boolean): Plan =>
-  mode === 'login' ? (authenticated ? 'relogin' : 'login') : authenticated ? 'resume' : 'gone'
+export type Mode = 'login' | 'restore' | 'oauth'
+export type Plan = 'login' | 'relogin' | 'resume' | 'gone' | 'await'
+export const planFor = (mode: Mode, authenticated: boolean): Plan =>
+  mode === 'oauth' ? 'await' : mode === 'login' ? (authenticated ? 'relogin' : 'login') : authenticated ? 'resume' : 'gone'
 
 /** A wallet is handed to the app only for a session the visitor just signed in to, or one they are resuming after a reload. */
-export const mayHandOver = (mode: 'login' | 'restore', signedInJustNow: boolean): boolean => mode === 'restore' || signedInJustNow
+export const mayHandOver = (mode: Mode, signedInJustNow: boolean): boolean => mode === 'restore' || signedInJustNow
 
 /**
  * Privy calls `onComplete` for a finished sign-in, but ALSO straight away, with `wasAlreadyAuthenticated: true`, when a session
@@ -65,3 +66,39 @@ export const isFreshSignIn = (done: { wasAlreadyAuthenticated: boolean }, weStar
  */
 export const ownsEmbedded = (user: { linkedAccounts?: ReadonlyArray<{ type: string; address?: string; walletClientType?: string }> } | null | undefined, address: string): boolean =>
   !!user?.linkedAccounts?.some(a => a.type === 'wallet' && a.walletClientType === 'privy' && a.address?.toLowerCase() === address.toLowerCase())
+
+// ── coming back from Google
+// Google sign-in leaves the page and returns with ?privy_oauth_code=…&privy_oauth_state=… in the address, and the Privy SDK
+// completes the sign-in only if it is running when the page loads. So a tab that started a sign-in remembers that (for ten minutes),
+// and the Privy host is started again on the way back. A link with those parameters but no remembered start does nothing.
+export const OAUTH_FLAG = 'chogchoir:privy-oauth' // sessionStorage: when this tab started a sign-in
+export const RETURN_KEY = 'chogchoir:privy-return' // sessionStorage: the page to go back to afterwards
+export const OAUTH_MAX_AGE_MS = 10 * 60 * 1000
+
+export const isOAuthReturn = (search: string): boolean => {
+  const q = new URLSearchParams(search)
+  return q.has('privy_oauth_code') && q.has('privy_oauth_state')
+}
+
+/** `startedAt` is what sessionStorage held (a timestamp as text) */
+export const startedRecently = (startedAt: string | null, now: number): boolean => {
+  const t = Number(startedAt)
+  return Number.isFinite(t) && t > 0 && now - t >= 0 && now - t <= OAUTH_MAX_AGE_MS
+}
+
+export const rememberStart = (): void => {
+  try { sessionStorage.setItem(OAUTH_FLAG, String(Date.now())); sessionStorage.setItem(RETURN_KEY, location.hash) } catch { /* private mode: Google sign-in may not come back */ }
+}
+export const forgetStart = (): void => { try { sessionStorage.removeItem(OAUTH_FLAG) } catch { /* ignore */ } }
+export const takeReturnHash = (): string | null => {
+  try { const h = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); return h } catch { return null }
+}
+
+/** What to start with when the page loads: finish a Google sign-in, quietly resume last time's session, or nothing. */
+export const initialMode = (lastWallet: string | null): Mode | null => {
+  if (!privyEnabled) return null
+  let started: string | null = null
+  try { started = sessionStorage.getItem(OAUTH_FLAG) } catch { /* ignore */ }
+  if (isOAuthReturn(location.search) && startedRecently(started, Date.now())) return 'oauth'
+  return lastWallet === PRIVY_ID ? 'restore' : null
+}

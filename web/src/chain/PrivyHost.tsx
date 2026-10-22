@@ -2,13 +2,14 @@ import { PrivyProvider, useLogin, usePrivy, useWallets } from '@privy-io/react-a
 import { useEffect, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { monadMainnet, monadTestnet } from './config'
-import { isFreshSignIn, mayHandOver, ownsEmbedded, planFor, PRIVY_ICON, PRIVY_ID, PRIVY_METHODS, privyMessages, type PrivyFound } from './privy'
+import { isFreshSignIn, mayHandOver, ownsEmbedded, planFor, PRIVY_ICON, PRIVY_ID, PRIVY_METHODS, privyMessages, type Mode, type PrivyFound } from './privy'
 import type { Found } from './wallet'
 
 export type HostProps = {
   appId: string
-  /** login: the visitor asked to sign in. restore: the page reloaded and the last session may still be good. */
-  mode: 'login' | 'restore'
+  /** login: the visitor asked to sign in. restore: the page reloaded and the last session may still be good.
+   *  oauth: the page just came back from Google, and the SDK is finishing that sign-in. */
+  mode: Mode
   onWallet(w: PrivyFound): void
   /** the flow ended without a wallet; `message` is for the visitor, absent when they simply closed the sign-in window */
   onGone(message?: string): void
@@ -43,7 +44,7 @@ function Bridge({ mode, onWallet, onGone, registerLogout }: HostProps) {
   const started = useRef(false)
   const delivered = useRef<string | null>(null)
   const [signedInJustNow, setSignedInJustNow] = useState(false)
-  const loginStarted = useRef(false) // true only once THIS page has called login(), after any old session was ended
+  const loginStarted = useRef(mode === 'oauth') // true only once THIS page started a sign-in: it called login() (after any old session was ended), or it is the page that left for Google
   const { login } = useLogin({
     onComplete: done => { if (isFreshSignIn(done, loginStarted.current)) setSignedInJustNow(true) },
     onError: err => onGone(String(err) === 'exited_auth_flow' ? undefined : privyMessages.failed),
@@ -64,10 +65,18 @@ function Bridge({ mode, onWallet, onGone, registerLogout }: HostProps) {
     const plan = planFor(mode, authenticated)
     if (plan === 'gone') { onGone(); return }
     started.current = true
+    if (plan === 'await') return // coming back from Google: the SDK is finishing the sign-in, and onComplete will say so
     const start = () => { loginStarted.current = true; login() }
     if (plan === 'relogin') void logout().then(start, () => onGone(privyMessages.failed)) // end the old session first, then sign in afresh
     else if (plan === 'login') start()
   }, [ready, authenticated, mode, login, logout, onGone])
+
+  // coming back from Google, but the sign-in never completed (the code was stale or already used)
+  useEffect(() => {
+    if (mode !== 'oauth' || signedInJustNow) return
+    const t = window.setTimeout(() => onGone(privyMessages.failed), WALLET_MS)
+    return () => window.clearTimeout(t)
+  }, [mode, signedInJustNow, onGone])
 
   // signed in: wait for the embedded wallet, then give its provider to the app
   // the embedded wallet that belongs to whoever is signed in now (never a stale entry from an earlier session)
