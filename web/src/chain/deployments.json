@@ -1,5 +1,11 @@
 {
-  "143": null,
+  "143": {
+    "choir": "0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0",
+    "nft": "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+    "token": "0x350035555E10d9AfAF1566AaebfCeD5BA6C27777",
+    "encorePrice": "1000000000000000000000",
+    "epochSeconds": 86400
+  },
   "10143": {
     "choir": "0xa5Caaa02348578b0c04a32319ea9D1Dd21F8aa78",
     "nft": "0x4adDeE666Ce1Cb04a9FF6169C2b12711Ecb95844",

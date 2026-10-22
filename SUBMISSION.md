@@ -9,7 +9,7 @@ Field names follow the Chogathon form. Anything in [square brackets] needs a rea
 - [x] App link live and tested from a clean browser (production smoke test passes on it).
 - [x] GitHub repo public (README is the tech and testing guide).
 - [ ] Team members, X and Discord handles.
-- [ ] Mainnet decision made. If mainnet is deployed, uncomment the **[MAINNET]** lines below; if not, delete them.
+- [x] Mainnet deployed 2026-10-22 (ChogChoir `0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0`), so the mainnet lines below are live.
 - [ ] Real feedback or usage added under "What's next". Do not invent any.
 - [ ] Re-read the deadline on your dashboard. Submissions can be edited until it closes.
 
@@ -35,7 +35,7 @@ Every Chog has a voice and a song, built from its real traits, and holders sing 
 
 **What makes it new.** Nobody has made music out of a collection's traits, and nobody has made the collection into one instrument that holders play together, round after round. Most NFT projects use the art as a skin on a game. Here the metadata itself is the sound.
 
-**How it runs.** No backend. Everything is the browser plus the chain. Rounds last 30 minutes on testnet. [MAINNET: and one day on Monad mainnet.] Each round's key and mode are derived on-chain from the round number, so everyone sings in the same key.
+**How it runs.** No backend. Everything is the browser plus the chain. Rounds last 30 minutes on testnet. and one day on Monad mainnet. Each round's key and mode are derived on-chain from the round number, so everyone sings in the same key.
 
 **Honest limits.** The builder cannot hear and measured the audio offline (pitch, vowel formants, loudness, clipping across 200 songs). On testnet the Chogs are free copies so judges can try everything, and the notes in the current testnet rounds come from the project wallet to keep the choir from sounding empty; those transactions are on the explorer.
 
@@ -48,7 +48,7 @@ The page asks: "If you removed the NFT, would the experience still work the same
 - **The band depends on holders.** It only gets fuller as more distinct Chogs sing, so every holder makes it better for every other holder.
 - **Encores burn $CHOG.** A second note costs 1,000 $CHOG. It is a real `burn()`, so the token's total supply goes down, and the app shows how much the choir has burned.
 
-Songs and Studio are open to everyone on purpose, so anyone can hear a Chog before they own one. Taking part in the Choir needs the real thing. [MAINNET: The real collection is `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763` on Monad mainnet.] On testnet the same contract points at a free copy of the collection so judges can try everything.
+Songs and Studio are open to everyone on purpose, so anyone can hear a Chog before they own one. Taking part in the Choir needs the real thing. The real collection is `0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763` on Monad mainnet, and the mainnet Choir contract is `0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0`. On testnet the same contract points at a free copy of the collection so judges can try everything.
 
 ## $CHOG
 
@@ -76,13 +76,13 @@ You can listen to everything without logging in or connecting a wallet. A wallet
    5. Claim two or three Chogs and press "Sing with all": they all sing in one transaction.
    6. Move the **What if more Chogs sing?** slider to hear the band fill out (a preview, never sent to the chain).
 4. **Records**: sealed rounds play back, and **Play all** plays every round in order. Anyone can seal a finished round.
-5. [MAINNET: Choose "Real Chogs on Monad" to sing with a real Chog. This needs a Chog in your wallet and a little MON.]
+5. Choose "Real Chogs on Monad" to sing with a real Chog. This needs a Chog in your wallet and a little MON.
 
 Without a wallet you can still watch the live choir fill up and play every round.
 
 ## Tech stack
 
-Vite, React, TypeScript, viem. Web Audio: formant synthesis, a small drum and bass band, offline rendering for measurement. Solidity 0.8.28, Foundry, OpenZeppelin v5. Monad testnet [and mainnet]. Canvas for posters and clip export (MediaRecorder). 38 contract tests, 60+ unit tests, an end-to-end test in a real browser that runs against a local chain and against real Monad testnet (real transactions, real waits between rounds), a rehearsal of the mainnet deployment on a fork against the real collection and token, and a 200-song audio sweep.
+Vite, React, TypeScript, viem. Web Audio: formant synthesis, a small drum and bass band, offline rendering for measurement. Solidity 0.8.28, Foundry, OpenZeppelin v5. Monad testnet and mainnet. Canvas for posters and clip export (MediaRecorder). 38 contract tests, 60+ unit tests, an end-to-end test in a real browser that runs against a local chain and against real Monad testnet (real transactions, real waits between rounds), a rehearsal of the mainnet deployment on a fork against the real collection and token, and a 200-song audio sweep.
 
 ## GitHub repo
 

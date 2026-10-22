@@ -32,7 +32,7 @@ If you removed the NFT, this would not work the same way, and most of it would n
 We kept Songs and Studio open on purpose, so anyone can hear a Chog before they own one. That is the way in; the shared choir is the reason to hold one.
 
 ON MONAD MAINNET AND TESTNET
-The Choir runs on Monad mainnet with the real Chog Genesis collection and the real $CHOG, in one-day rounds that turn over at 00:00 UTC. A free copy runs on Monad testnet with a replica collection and a faucet token, so anyone can try singing without owning a Chog. You can listen to everything without connecting a wallet. Connecting one shows which Chogs you own, and it is needed to sing: use any browser wallet, or sign in with email or Google and a wallet is created for you.
+The Choir runs on Monad mainnet with the real Chog Genesis collection and the real $CHOG, in one-day rounds that turn over at 00:00 UTC. The mainnet contract is 0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0. A free copy runs on Monad testnet with a replica collection and a faucet token, so anyone can try singing without owning a Chog. You can listen to everything without connecting a wallet. Connecting one shows which Chogs you own, and it is needed to sing: use any browser wallet, or sign in with email or Google and a wallet is created for you.
 
 HOW IT RUNS
 There is no backend of our own: everything is the browser plus the chain. Each round's key and mode are derived on-chain from the round number, so everyone sings in the same key.

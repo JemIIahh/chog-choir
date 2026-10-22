@@ -1,15 +1,17 @@
 # Mainnet runbook
 
+> **Deployed 2026-10-22.** ChogChoir [`0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0`](https://monadvision.com/address/0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0) on Monad mainnet, in tx [`0x627f374eb6a67951f5f45767d71a579d25a603942e98720b57703a10a638ef22`](https://monadvision.com/tx/0x627f374eb6a67951f5f45767d71a579d25a603942e98720b57703a10a638ef22) (block 115626872), from the builder's own wallet (`0xB370…f7be`). That wallet has no special powers: the contract has no owner or admin functions. The deploy paid 0.1818 MON (1,782,112 gas at 102 gwei). Read back from two RPCs: `chog()` is the real Chog Genesis, `chogToken()` the real $CHOG, `epochSeconds()` 86400, `encorePrice()` 1000e18, `startTime()` 2026-10-22 00:00 UTC. What follows is the runbook that was used.
+
 Everything here was rehearsed first: the deploy script, the contract and the page, against the **real** Chog Genesis and the **real** $CHOG on a local fork of Monad mainnet (`qa/fork-rehearsal.mjs`, `qa/mainnet-fork-ui.mjs`), and the whole product on real Monad testnet (`MODE=testnet node qa/e2e.mjs`). Nothing is sent to mainnet until you run the commands below. The contract is immutable once deployed.
 
 ## What you need to provide
 
 - A decision on **round length**. Recommended: **one day** (`EPOCH_SECONDS=86400`): rounds turn over at 00:00 UTC, a streak means "I came back tomorrow", and a judge who looks in on a different day sees a different round.
-- **A wallet to deploy from, with about 1 MON on Monad mainnet.** The deploying wallet has **no special powers afterwards**: the contract has no owner and no admin functions, so it only needs to pay the gas once. Three ways, safest first:
+- **A wallet to deploy from, with about 0.5 MON on Monad mainnet** (the deploy itself costs about 0.19 MON at today's 102 gwei, because Monad charges the gas limit). The deploying wallet has **no special powers afterwards**: the contract has no owner and no admin functions, so it only needs to pay the gas once. Three ways, safest first:
 
 | | How | Where the key lives |
 |---|---|---|
-| **1. Fund the prepared wallet** | Send about 1 MON (mainnet, chain 143) to `0x7a79011b2998D04cDF5b72c19155C37CF9Ff9D43`. Claude runs the deploy. | A fresh key generated on this machine (`contracts/.env.mainnet`, git-ignored). Your own wallet's key never leaves it. |
+| **1. Key in a git-ignored file on this machine (used)** | Put the key in `contracts/.env.mainnet` as `DEPLOYER_PRIVATE_KEY=` and fund that wallet's address on mainnet (chain 143). Claude runs the deploy, then blanks the key. | `contracts/.env.mainnet`, git-ignored, chmod 600. Never on Vercel, never in chat. |
 | **2. Deploy from your own wallet, in your own Terminal** | Below. | Your key goes into an encrypted keystore on your machine (you type it at a hidden prompt), and is never in a file, a chat or an environment variable. |
 | **3. Hardware wallet** | Same command as 2 with `--ledger` (or `--trezor`) instead of `--account chog-main`. | On the device. |
 
@@ -46,7 +48,7 @@ The script **refuses** on chain 143 unless `NFT` and `TOKEN` are exactly those t
 3. `cd web && pnpm build && node ../qa/smoke-prod.mjs`, then redeploy the app (`cd web && vercel deploy --prod`; the project is already linked) and run `node qa/smoke-prod.mjs https://chog-choir.vercel.app/`. Switch the page to "Real Chogs on Monad" and check the round loads.
 4. Verify the source on the explorer so judges can read it.
 5. Sing with a real Chog yourself and take one encore, so the first real activity is yours and you see the burn on the explorer.
-6. Update `SUBMISSION.md` (uncomment the **[MAINNET]** lines) and the README deployments table.
+6. Update `SUBMISSION.md` (done) and the README deployments table (done).
 
 ## Do not
 

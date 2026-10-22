@@ -20,6 +20,6 @@ Rounds last 30 minutes on testnet.
 When a round ends anyone can press "Seal it". Sealed rounds play back, and "Play all" plays every sealed round in order.
 
 5. THE REAL VERSION (Monad mainnet, chain 143)
-Press "Real Chogs on Monad" at the top of The Choir. Singing here needs a real Chog Genesis in your connected wallet (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763) and a little MON, and an encore burns real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). If you do not hold a Chog you can still watch the round, play it, and use the preview slider. Rounds are one day long and turn over at 00:00 UTC.
+Press "Real Chogs on Monad" at the top of The Choir. Singing here needs a real Chog Genesis in your connected wallet (0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763) and a little MON, and an encore burns real $CHOG (0x350035555E10d9AfAF1566AaebfCeD5BA6C27777). The mainnet Choir contract is 0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0. If you do not hold a Chog you can still watch the round, play it, and use the preview slider. Rounds are one day long and turn over at 00:00 UTC.
 
 The code is at https://github.com/JemIIahh/chog-choir . Its README lists every contract address and how each part was tested.

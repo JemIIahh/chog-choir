@@ -87,7 +87,15 @@ node onboarding.mjs; node theme.mjs; node wallet.mjs   # the welcome, dark/light
 
 Rounds on testnet are seeded from the project wallet (`0x79e3…30e4`, a throwaway deployer) so the choir is not empty: it claims some replica Chogs and has them sing one note each per round (`scripts/seed.mjs`, one `placeMany` transaction). Those transactions are real and visible on the explorer, and they are not user activity.
 
-**Monad mainnet (chain 143):** not deployed yet. [`docs/MAINNET.md`](docs/MAINNET.md) is the runbook.
+**Monad mainnet (chain 143), live.** Rounds last one day and turn over at 00:00 UTC. It is the same contract as on testnet, pointed at the real collection and the real $CHOG.
+
+| Contract | Address |
+|---|---|
+| ChogChoir | [`0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0`](https://monadvision.com/address/0x1C7CF660BD5e858360E261caB59F3CD1638F8bc0) |
+| Chog Genesis (the real collection, not ours) | [`0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763`](https://monadvision.com/address/0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763) |
+| $CHOG (the real token, not ours) | [`0x350035555E10d9AfAF1566AaebfCeD5BA6C27777`](https://monadvision.com/address/0x350035555E10d9AfAF1566AaebfCeD5BA6C27777) |
+
+Deployed in [`0x627f374e…ef22`](https://monadvision.com/tx/0x627f374eb6a67951f5f45767d71a579d25a603942e98720b57703a10a638ef22) (block 115626872, 2026-10-22). The deploying wallet has no special powers: the contract has no owner and no admin functions. Read back after deploying: the real collection, the real $CHOG, 86400-second rounds, a 1,000 $CHOG encore. The mainnet choir is not seeded: it holds only what real Chog holders sing. [`docs/MAINNET.md`](docs/MAINNET.md) is the runbook that was followed.
 
 Testing is written up in [`docs/HARDENING.md`](docs/HARDENING.md).
 

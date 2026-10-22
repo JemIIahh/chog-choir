@@ -51,6 +51,18 @@ try {
   assert.match(await page.textContent('.fill output'), /live/)
   step('community meter, loft and the preview slider are there')
 
+  // the real-Chogs side: the production build reads the live mainnet contract, and its daily round turns over at 00:00 UTC
+  await page.goto(BASE + '?net=main#choir', { waitUntil: 'networkidle' })
+  await page.waitForFunction(() => /^Round \d+$/.test(document.querySelector('.stage h1')?.textContent ?? ''), null, { timeout: 45000 })
+  await page.waitForFunction(() => /of 1,969 Chogs have sung/.test(document.querySelector('.community')?.textContent ?? ''), null, { timeout: 45000 })
+  assert.equal(await page.getAttribute('.stage button:has-text("Real Chogs on Monad")', 'aria-pressed'), 'true')
+  const mainSub = (await page.textContent('.stage .sub')).trim()
+  const ends = mainSub.match(/ends in ([\d:]+)/)
+  assert.ok(ends, `the mainnet round shows when it ends: "${mainSub}"`)
+  const left = ends[1].split(':').reduce((t, n) => t * 60 + Number(n), 0), expect = 86400 - ((Date.now() / 1000) % 86400)
+  assert.ok(Math.abs(left - expect) < 120, `the mainnet round should end at 00:00 UTC (${left}s left, expected about ${Math.round(expect)}s)`)
+  step(`Monad mainnet (real Chogs): "${(await page.textContent('.stage h1')).trim()}", ${mainSub}; it ends at 00:00 UTC`)
+
   // a crafted link must not be able to point the app at someone else's contract or RPC
   const evil = new Set()
   page.on('request', r => { if (new URL(r.url()).host === 'evil.invalid') evil.add(r.url()) }) // the page's own address contains the word, so compare hosts
